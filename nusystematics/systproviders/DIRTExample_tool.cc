@@ -113,7 +113,7 @@ DIRTExample::GetEventResponse(genie::EventRecord const &ev) {
 
     resp.push_back( {md[pidx_AltModelA].systParamId, {}} );
     for (double var : md[pidx_AltModelA].paramVariations) {
-      resp.back().responses.push_back( GetDIRTExampleWeight( emTransfer.Vect().Mag(), emTransfer.E(), var) );
+      resp.back().responses.push_back( GetReweightToAltModelA( emTransfer.Vect().Mag(), emTransfer.E(), var) );
     }
 
   }
@@ -121,7 +121,7 @@ DIRTExample::GetEventResponse(genie::EventRecord const &ev) {
     
     resp.push_back( {md[pidx_AltModelB].systParamId, {}} );
     for (double var : md[pidx_AltModelB].paramVariations) {
-      resp.back().responses.push_back( GetDIRTExampleWeight( emTransfer.Vect().Mag(), emTransfer.E(), var) );
+      resp.back().responses.push_back( GetReweightToAltModelB( emTransfer.Vect().Mag(), emTransfer.E(), var) );
     }     
     
   }
