@@ -488,6 +488,10 @@ int main(int argc, char const *argv[]) {
 #endif
     tst.Add(resp);
     tst.Fill();
+
+    // TH: Very important to clear this object to avoid memory issues!
+    GenieNtpl->Clear();
+
   }
   std::cout << std::endl;
 }
