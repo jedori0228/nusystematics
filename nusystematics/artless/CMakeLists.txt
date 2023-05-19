@@ -122,6 +122,7 @@ INSTALL(FILES ${UTIL_HDRFILES} DESTINATION include/nusystematics/utility)
 SET(RC_HDRFILES
   ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/BeRPA.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/C12ToAr40_2p2hScaling.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/CCQERPAReweight.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/DIRTExample_Reweight.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/EnuBinnedTemplateResponseCalculator.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/FSILikeEAvailSmearing.hh
@@ -141,6 +142,7 @@ INSTALL(FILES ${RC_HDRFILES} DESTINATION include/nusystematics/responsecalculato
 ####### systproviders library
 SET(SP_IMPLFILES
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/BeRPAWeight_tool.cc
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/CCQERPAReweight_tool.cc
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/DIRTExample_tool.cc
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/EbLepMomShift_tool.cc
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/FSILikeEAvailSmearing_tool.cc
@@ -156,6 +158,7 @@ SET(SP_IMPLFILES
 
 SET(SP_HDRFILES
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/BeRPAWeight_tool.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/CCQERPAReweight_tool.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/DIRTExample_tool.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/EbLepMomShift_tool.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/FSILikeEAvailSmearing_tool.hh
