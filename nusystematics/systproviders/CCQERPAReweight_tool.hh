@@ -16,7 +16,7 @@
 
 class CCQERPAReweight : public nusyst::IGENIESystProvider_tool {
 
-  //std::unique_ptr<nusyst::CCQERPAReweightCalculator> ccqeRPAReweightCalculator;
+  std::unique_ptr<nusyst::CCQERPAReweightCalculator> ccqeRPAReweightCalculator;
 
 public:
   explicit CCQERPAReweight(fhicl::ParameterSet const &);

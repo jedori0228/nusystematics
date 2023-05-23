@@ -18,7 +18,7 @@ using namespace fhicl;
 
 CCQERPAReweight::CCQERPAReweight(ParameterSet const &params)
     : IGENIESystProvider_tool(params),
-      //ccqeRPAReweightCalculator(nullptr),
+      ccqeRPAReweightCalculator(nullptr),
       ResponseParameterIdx(systtools::kParamUnhandled<size_t>),
       valid_file(nullptr), valid_tree(nullptr) {}
 
@@ -63,11 +63,10 @@ bool CCQERPAReweight::SetupResponseCalculator(
   std::cout << "[CCQERPAReweight::SetupResponseCalculator] OPT_STRING = " << tool_options.get<std::string>("OPT_STRING") << std::endl;
   std::cout << "[CCQERPAReweight::SetupResponseCalculator] OPT_BOOL = " << tool_options.get<bool>("OPT_BOOL") << std::endl;
 
-/*
   ccqeRPAReweightCalculator = std::make_unique<CCQERPAReweightCalculator>(
     tool_options.get<fhicl::ParameterSet>("CCQE_RPA_input_manifest")
   );
-*/
+
   ResponseParameterIdx =
       GetParamIndex(GetSystMetaData(), "CCQERPAReweight");
 
@@ -89,8 +88,7 @@ CCQERPAReweight::GetEventResponse(genie::EventRecord const &ev) {
       !ev.Summary()->ProcInfo().IsWeakCC()) {
     return this->GetDefaultEventResponse();
   }
-    return this->GetDefaultEventResponse();
-/*
+
   genie::GHepParticle *FSLep = ev.FinalStatePrimaryLepton();
   genie::GHepParticle *ISLep = ev.Probe();
 
@@ -120,7 +118,6 @@ CCQERPAReweight::GetEventResponse(genie::EventRecord const &ev) {
       CAngleLeps,
       var
     );
-    std::cout << "this_reweight = " << this_reweight << std::endl;
     resp.back().responses.push_back( this_reweight );
   }
 
@@ -152,7 +149,7 @@ CCQERPAReweight::GetEventResponse(genie::EventRecord const &ev) {
   }
 
   return resp;
-*/
+
 }
 
 std::string CCQERPAReweight::AsString() { return ""; }
