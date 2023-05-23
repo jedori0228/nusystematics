@@ -235,6 +235,9 @@ TemplateResponseCalculatorBase<NDims, Continuous, PolyResponseOrder>::
                 << resp.second->GetBinContent(bin)
                 << " from hist: " << resp.second->GetName() << std::endl;
 #endif
+      std::cout << "[TemplateResponseCalculatorBase][GetVariation] bin = " << bin << std::endl;
+      std::cout << "[TemplateResponseCalculatorBase][GetVariation] histName = " << resp.second->GetName() << std::endl;
+      std::cout << "[TemplateResponseCalculatorBase][GetVariation] binC = " << resp.second->GetBinContent(bin) << std::endl;
       return resp.second->GetBinContent(bin);
     }
   }

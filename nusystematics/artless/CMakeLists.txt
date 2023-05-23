@@ -110,49 +110,64 @@ include_directories(${CMAKE_INSTALL_PREFIX}/include)
 
 ####### utility library
 SET(UTIL_HDRFILES
+  ${CMAKE_SOURCE_DIR}/nusystematics/utility/GENIEUtils.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/utility/enumclass2int.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/utility/exceptions.hh
-  ${CMAKE_SOURCE_DIR}/nusystematics/utility/GENIEUtils.hh)
+  ${CMAKE_SOURCE_DIR}/nusystematics/utility/simbUtility.hh
+)
 
 INSTALL(FILES ${UTIL_HDRFILES} DESTINATION include/nusystematics/utility)
 
 ####### responsecalculators library
 SET(RC_HDRFILES
   ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/BeRPA.hh
-  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/TemplateResponseCalculatorBase.hh
-  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/MKSinglePiTemplate_ReWeight.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/C12ToAr40_2p2hScaling.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/CCQERPAReweightCalculator.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/EnuBinnedTemplateResponseCalculator.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/FSILikeEAvailSmearing.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/MINERvA2p2hEnergyDependenceScale.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/MINERvA2p2hq0q3.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/MINERvARPAq0q3_ReWeight.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/MINERvAq0q3Weighting_data.hh
-  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/MINERvARPAq0q3_ReWeight.hh)
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/MKSinglePiTemplate_ReWeight.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/SPPLowQ2Suppression.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/TemplateResponseCalculatorBase.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/nuenuebar_xsec_ratio.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/responsecalculators/nuenumu_xsec_ratio.hh
+)
 
 INSTALL(FILES ${RC_HDRFILES} DESTINATION include/nusystematics/responsecalculators)
 
 ####### systproviders library
 SET(SP_IMPLFILES
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEReWeight_tool.cc
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEReWeightEngineConfig.cc
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEReWeightParamConfig.cc
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MKSinglePiTemplate_tool.cc
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MINERvAq0q3Weighting_tool.cc
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/NOvAStyleNonResPionNorm_tool.cc
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/BeRPAWeight_tool.cc
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MiscInteractionSysts_tool.cc
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MINERvAE2p2h_tool.cc
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/CCQERPAReweight_tool.cc
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/EbLepMomShift_tool.cc
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/FSILikeEAvailSmearing_tool.cc
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEReWeightEngineConfig.cc
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEReWeightParamConfig.cc
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEReWeight_tool.cc
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MINERvAE2p2h_tool.cc
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MINERvAq0q3Weighting_tool.cc
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MKSinglePiTemplate_tool.cc
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MiscInteractionSysts_tool.cc
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/NOvAStyleNonResPionNorm_tool.cc
 )
 
 SET(SP_HDRFILES
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEReWeight_tool.hh
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MKSinglePiTemplate_tool.hh
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MINERvAq0q3Weighting_tool.hh
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEResponseParameterAssociation.hh
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/NOvAStyleNonResPionNorm_tool.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/BeRPAWeight_tool.hh
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MiscInteractionSysts_tool.hh
-  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MINERvAE2p2h_tool.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/CCQERPAReweight_tool.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/EbLepMomShift_tool.hh
   ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/FSILikeEAvailSmearing_tool.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEReWeightEngineConfig.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEReWeightParamConfig.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEReWeight_tool.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/GENIEResponseParameterAssociation.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MINERvAE2p2h_tool.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MINERvAq0q3Weighting_tool.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MKSinglePiTemplate_tool.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/MiscInteractionSysts_tool.hh
+  ${CMAKE_SOURCE_DIR}/nusystematics/systproviders/NOvAStyleNonResPionNorm_tool.hh
 )
 
 if(CMAKE_BUILD_TYPE MATCHES DEBUG)
@@ -284,6 +299,9 @@ INSTALL(FILES ${CMAKE_SOURCE_DIR}/nusystematics/interface/IGENIESystProvider_too
 
 ####### response_helper
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/nusystematics/artless/response_helper.hh DESTINATION include/nusystematics/artless)
+
+##### make_instance.hh
+INSTALL(FILES ${CMAKE_SOURCE_DIR}/nusystematics/artless/make_instance.hh DESTINATION include/nusystematics/artless)
 
 ####### fhicl files
 file(GLOB FCL ${CMAKE_SOURCE_DIR}/nusystematics/fcl/*.fcl)
