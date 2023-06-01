@@ -313,3 +313,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.sh.in
 install(FILES
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/setup.sh" DESTINATION
   ${CMAKE_INSTALL_PREFIX})
+
+####### data files (e.g., template histograms)
+file(GLOB DATAFILES ${CMAKE_SOURCE_DIR}/nusystematics/data/*)
+install(FILES ${DATAFILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/data)

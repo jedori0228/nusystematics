@@ -20,6 +20,7 @@
 #include "TSpline.h"
 
 NEW_SYSTTOOLS_EXCEPT(invalid_CCQE_RPA_tweak);
+NEW_SYSTTOOLS_EXCEPT(invalid_CCQE_RPA_FILEPATH);
 
 namespace nusyst {
 
@@ -105,7 +106,16 @@ namespace nusyst {
          ps.get<std::vector<fhicl::ParameterSet>>("inputs")) {
       std::string hName = val_config.get<std::string>("name");
       std::string input_hist = val_config.get<std::string>("input_hist");
-      std::string input_file = val_config.get<std::string>("input_file", default_root_file);
+      std::string input_file = val_config.get<std::string>("input_file", default_root_file); // If specified per hist, replace it
+
+      // if it does not start with "/", find it under ${NUSYSTEMATICS_FQ_DIR}/data/
+      if(input_file.find("/")!=0){
+        std::string tmp_NUSYSTEMATICS_FQ_DIR = std::getenv("NUSYSTEMATICS_FQ_DIR");
+        if(tmp_NUSYSTEMATICS_FQ_DIR==""){
+          throw invalid_CCQE_RPA_FILEPATH() << "[ERROR]: ${NUSYSTEMATICS_FQ_DIR} not set but put relative path:" << input_file;
+        }
+        input_file = tmp_NUSYSTEMATICS_FQ_DIR+"/data/"+input_file;
+      }
 
 #ifndef NO_ART
 
