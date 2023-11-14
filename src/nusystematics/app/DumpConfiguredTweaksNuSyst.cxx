@@ -73,6 +73,8 @@ struct TweakSummaryTree {
   double q0_GeV;
   double q3_GeV;
   double EAvail_GeV;
+  double pip_ke;
+  double pim_ke;
   std::vector<int> fsi_pdgs;
   std::vector<int> fsi_codes;
 
@@ -102,6 +104,8 @@ struct TweakSummaryTree {
     t->Branch("q0_GeV", &q0_GeV, "q0_GeV/D");
     t->Branch("q3_GeV", &q3_GeV, "q3_GeV/D");
     t->Branch("EAvail_GeV", &EAvail_GeV, "EAvail_GeV/D");
+    t->Branch("pip_ke", &pip_ke, "pip_ke/D");
+    t->Branch("pim_ke", &pim_ke, "pim_ke/D");
     t->Branch("fsi_pdgs", "vector<int>", &fsi_pdgs);
     t->Branch("fsi_codes", "vector<int>", &fsi_codes);
 
@@ -381,6 +385,13 @@ int main(int argc, char const *argv[]) {
     std::vector<int> fsi_pdgs;
     std::vector<int> fsi_codes;
 
+    // find highest momentum final-state particle
+    double max_mom_fs_pip = -999.;
+    double max_mom_fs_pim = -999.;
+
+    GHepParticle *ptl_hm_fs_pip = 0;
+    GHepParticle *ptl_hm_fs_pim = 0;
+
     while ( (p = dynamic_cast<GHepParticle *>(event_iter.Next())) ) {
       ip++;
 
@@ -389,29 +400,57 @@ int main(int argc, char const *argv[]) {
       bool is_pion    = pdg::IsPion   (pdgc);
       bool is_nucleon = pdg::IsNucleon(pdgc);
       bool is_kaon = pdg::IsKaon( pdgc );
-      if(!is_pion && !is_nucleon && !is_kaon){
-        continue;
-      }
-
-      // Skip particles with code other than 'hadron in the nucleus'
       GHepStatus_t ist  = p->Status();
-      if(ist != kIStHadronInTheNucleus){
-        continue;
+
+      TLorentzVector* ptl_P4 = p->P4();
+      double mom_mag = ptl_P4->Vect().Mag();
+
+      // final-state
+      if( ist==kIStStableFinalState ){
+        // pip
+        if( pdgc==genie::kPdgPiP ){
+          if( mom_mag > max_mom_fs_pip ){
+            ptl_hm_fs_pip = p;
+          }
+        }
+        // pim
+        if( pdgc==genie::kPdgPiM ){
+          if( mom_mag > max_mom_fs_pim ){
+            ptl_hm_fs_pim = p;
+          }
+        }
       }
 
-      // Kaon FSIs can't currently be reweighted. Just update (A, Z) based on
-      // the particle's daughters and move on.
-      if ( is_kaon ) {
-        continue;
+      // fsi
+      if( (is_pion||is_nucleon||is_kaon) && (ist==kIStHadronInTheNucleus) ){
+        // Kaon FSIs can't currently be reweighted. Just update (A, Z) based on
+        // the particle's daughters and move on.
+        if( !is_kaon ){
+          int fsi_code = p->RescatterCode();
+          fsi_pdgs.push_back(pdgc);
+          fsi_codes.push_back(fsi_code);
+        }
       }
 
-      int fsi_code = p->RescatterCode();
-      fsi_pdgs.push_back(pdgc);
-      fsi_codes.push_back(fsi_code);
 
     } // END particle loop
     tst.fsi_pdgs = fsi_pdgs;
     tst.fsi_codes = fsi_codes;
+
+    // fill pip
+    if(ptl_hm_fs_pip){
+      tst.pip_ke = ptl_hm_fs_pip->KinE();
+    }
+    else{
+      tst.pip_ke = -999.;
+    }
+    // fill pim
+    if(ptl_hm_fs_pim){
+      tst.pim_ke = ptl_hm_fs_pim->KinE();
+    }
+    else{
+      tst.pim_ke = -999.;
+    }
 
     if (!(ev_it % NToShout)) {
       std::cout << (ev_it ? "\r" : "") << "Event #" << ev_it << "/" << NToRead
