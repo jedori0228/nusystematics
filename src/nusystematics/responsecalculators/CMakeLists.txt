@@ -15,6 +15,7 @@ SET(RSPC_HDRFILES
   FSILikeEAvailSmearing.hh
   MINERvAq0q3Weighting_data.hh
   nuenuebar_xsec_ratio.hh
+  SPPTpiReweightCalculator.hh
 )
 
 
