@@ -162,27 +162,35 @@ bool GENIEReWeight::SetupResponseCalculator(
   genie::Messenger::Instance()->SetPrioritiesFromXmlFile(
       "Messenger_laconic.xml");
 
+  std::cout << "[INFO]: ConfigureQEWeightEngine" << std::endl;
   extend_ResponseToGENIEParameters(
       ConfigureQEWeightEngine(GetSystMetaData(), tool_options));
 
+  std::cout << "[INFO]: ConfigureMECWeightEngine" << std::endl;
   extend_ResponseToGENIEParameters(
       ConfigureMECWeightEngine(GetSystMetaData(), tool_options));
 
+  std::cout << "[INFO]: ConfigureNCELWeightEngine" << std::endl;
   extend_ResponseToGENIEParameters(
       ConfigureNCELWeightEngine(GetSystMetaData(), tool_options));
 
+  std::cout << "[INFO]: ConfigureRESWeightEngine" << std::endl;
   extend_ResponseToGENIEParameters(
       ConfigureRESWeightEngine(GetSystMetaData(), tool_options));
 
+  std::cout << "[INFO]: ConfigureCOHWeightEngine" << std::endl;
   extend_ResponseToGENIEParameters(
       ConfigureCOHWeightEngine(GetSystMetaData(), tool_options));
 
+  std::cout << "[INFO]: ConfigureDISWeightEngine" << std::endl;
   extend_ResponseToGENIEParameters(
       ConfigureDISWeightEngine(GetSystMetaData(), tool_options));
 
+  std::cout << "[INFO]: ConfigureFSIWeightEngine" << std::endl;
   extend_ResponseToGENIEParameters(
       ConfigureFSIWeightEngine(GetSystMetaData(), tool_options));
 
+  std::cout << "[INFO]: ConfigureOtherWeightEngine" << std::endl;
   extend_ResponseToGENIEParameters(
       ConfigureOtherWeightEngine(GetSystMetaData(), tool_options));
 
@@ -233,6 +241,10 @@ GENIEReWeight::GetEventResponse(genie::EventRecord const &gev) {
   }
 
   return event_responses;
+}
+
+nusyst::GENIEResponseParameter& GENIEReWeight::GetGENIEResponseParameter(size_t pid){
+  return nusyst::GetResponseParameter(ResponseToGENIEParameters, pid);
 }
 
 double GENIEReWeight::GetEventWeightResponse(
