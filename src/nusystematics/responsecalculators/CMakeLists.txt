@@ -16,6 +16,7 @@ SET(RSPC_HDRFILES
   MINERvAq0q3Weighting_data.hh
   nuenuebar_xsec_ratio.hh
   CCQERPAReweightCalculator.hh
+  FSIReweightCalculator.hh
 )
 
 

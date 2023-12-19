@@ -9,6 +9,7 @@ SET(SYSTP_IMPLFILES
   MiscInteractionSysts_tool.cc
   NOvAStyleNonResPionNorm_tool.cc
   CCQERPAReweight_tool.cc
+  FSIReweight_tool.cc
   )
 
 if(GENIEReWeight_ENABLED)
@@ -28,6 +29,7 @@ SET(SYSTP_HDRFILES
   MiscInteractionSysts_tool.hh
   NOvAStyleNonResPionNorm_tool.hh
   CCQERPAReweight_tool.hh
+  FSIReweight_tool.hh
 )
 
 if(GENIEReWeight_ENABLED)
