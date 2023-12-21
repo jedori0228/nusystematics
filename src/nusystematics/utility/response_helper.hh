@@ -217,10 +217,35 @@ public:
       return GetParameterResponse(pid, v, eur);
     }
 
+    // Getting the header
+    systtools::SystParamHeader const & sph = GetHeader(pid);
+    std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] Prining variations set by fcl" << std::endl;
+    for(const auto& v: sph.paramVariations){
+      std::cout << v << std::endl;
+    }
+
     // now we know i-th systprovider is GENIEReWeight
     // get the GENIEResponseParameter with this given pid
     GENIEResponseParameter& genieRP = genie_sp->GetGENIEResponseParameter(pid);
-    std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] Printing WghtCalcnames" << std::endl;
+    std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] Number of GReWeights: " << genieRP.Herg.size() << std::endl;
+    for(auto& grw: genieRP.Herg){
+      // grw is our std::unique_ptr<genie::rew::GReWeight>
+
+      std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] - Printing Infos of this GReWeight" << std::endl;
+      std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse]   - WghtCalcNames" << std::endl;
+      for(auto& name: grw->WghtCalcNames()){
+        std::cout << name << std::endl;
+      }
+      std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse]   - GSystSet" << std::endl;
+      genie::rew::GSystSet &gss = grw->Systematics();
+      for(auto& gs: gss.AllIncluded()){
+        std::string gs_string = genie::rew::GSyst::AsString(gs);
+        printf("%s %d\n", gs_string.c_str(), gs);
+      }
+
+    }
+
+    std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] Printing GSysts" << std::endl;
     for(auto& grw: genieRP.Herg){
       // grw is our std::unique_ptr<genie::rew::GReWeight
       for(auto& name: grw->WghtCalcNames()){
