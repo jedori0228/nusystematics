@@ -1,6 +1,9 @@
 #pragma once
 
 #include "nusystematics/interface/IGENIESystProvider_tool.hh"
+
+#include "nusystematics/systproviders/GENIEReWeight_tool.hh"
+
 #include "nusystematics/utility/make_instance.hh"
 
 #include "systematicstools/interface/SystParamHeader.hh"
@@ -184,5 +187,75 @@ public:
     }
     return weight;
   }
-}; // namespace nusyst
+
+  // Improved spline-based response
+  double GetImprovedParameterResponse(
+    systtools::paramId_t pid, double v, systtools::event_unit_response_t const &eur) const {
+
+    std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] syst_providers.size() = " << syst_providers.size() << std::endl;
+    std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] pid = " << pid << std::endl;
+
+    // Get SystProvider that contains param with this given pid
+    size_t sp_idx = systtools::kParamUnhandled<size_t>;
+    for(size_t i=0; i<syst_providers.size(); i++){
+      if(syst_providers[i]->ParamIsHandled(pid)){
+        sp_idx = i;
+        break;
+      }
+    }
+    if(sp_idx==systtools::kParamUnhandled<size_t>){
+      throw response_helper_found_no_parameters()
+          << "[ERROR]: ParamID = " << pid << " is not found from configured parameter headers";
+    }
+
+    std::unique_ptr<IGENIESystProvider_tool> const &sp = syst_providers[sp_idx];
+    IGENIESystProvider_tool* rawPtr = sp.get();
+    GENIEReWeight* genie_sp = dynamic_cast<GENIEReWeight*>(rawPtr);
+
+    // Now this only works for GENIEReWeight tool
+    if(sp->GetToolType()!="GENIEReWeight"){
+      return GetParameterResponse(pid, v, eur);
+    }
+
+    // Getting the header
+    systtools::SystParamHeader const & sph = GetHeader(pid);
+    std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] Prining variations set by fcl" << std::endl;
+    for(const auto& v: sph.paramVariations){
+      std::cout << v << std::endl;
+    }
+
+    // now we know i-th systprovider is GENIEReWeight
+    // get the GENIEResponseParameter with this given pid
+    GENIEResponseParameter& genieRP = genie_sp->GetGENIEResponseParameter(pid);
+    std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] Number of GReWeights: " << genieRP.Herg.size() << std::endl;
+    for(auto& grw: genieRP.Herg){
+      // grw is our std::unique_ptr<genie::rew::GReWeight>
+
+      std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] - Printing Infos of this GReWeight" << std::endl;
+      std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse]   - WghtCalcNames" << std::endl;
+      for(auto& name: grw->WghtCalcNames()){
+        std::cout << name << std::endl;
+      }
+      std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse]   - GSystSet" << std::endl;
+      genie::rew::GSystSet &gss = grw->Systematics();
+      for(auto& gs: gss.AllIncluded()){
+        std::string gs_string = genie::rew::GSyst::AsString(gs);
+        printf("%s %d\n", gs_string.c_str(), gs);
+      }
+
+    }
+
+    std::cout << "[JSKIMDEBUG][GetImprovedParameterResponse] Printing GSysts" << std::endl;
+    for(auto& grw: genieRP.Herg){
+      // grw is our std::unique_ptr<genie::rew::GReWeight
+      for(auto& name: grw->WghtCalcNames()){
+        std::cout << name << std::endl;
+      }
+    }
+
+    return 1;
+  }
+
+}; // class def response_helper 
+
 } // namespace nusyst
