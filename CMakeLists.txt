@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
 
 find_program(CMAKE_C_COMPILER NAMES $ENV{CC} gcc PATHS ENV PATH NO_DEFAULT_PATH)
 find_program(CMAKE_CXX_COMPILER NAMES $ENV{CXX} g++ PATHS ENV PATH NO_DEFAULT_PATH)
 
 set(CMAKE_CXX_STANDARD 17)
 
-project(nusystematics VERSION 23.06 LANGUAGES CXX)
+project(nusystematics VERSION 02.00.01 LANGUAGES CXX)
 
 #Changes default install path to be a subdirectory of the build dir.
 #Can set build dir at configure time with -DCMAKE_INSTALL_PREFIX=/install/path
@@ -24,7 +24,6 @@ LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 include(CPM)
 
 find_package(ROOT 6.10 REQUIRED)
-find_package(fhiclcpp 4.17 REQUIRED)
 
 CPMFindPackage(
     NAME systematicstools
@@ -44,6 +43,16 @@ else()
   include(${CMakeModules_SOURCE_DIR}/NuHepMCModules.cmake)
 endif()
 
+CPMFindPackage(
+    NAME Eigen3
+    VERSION 3.4.0
+    GITLAB_REPOSITORY "libeigen/eigen"
+    GIT_TAG "3.4.0"
+    OPTIONS "EIGEN_BUILD_DOC no" "BUILD_TESTING no"
+)
+## CMakeLists of Eigen3 include GNUInstallDirs, at it detects the system and change CMAKE_INSTALL_LIBDIR to lib64
+set(CMAKE_INSTALL_LIBDIR "lib")
+
 find_package(GENIE3 REQUIRED)
 if(NOT TARGET GENIE3::All)
   message(FATAL_ERROR "Expected find_package(GENIE3 REQUIRED) call to set up target GENIE3::All.")
@@ -52,7 +61,7 @@ endif()
 ###### Compiler set up
 add_library(nusystematics_dependencies INTERFACE)
 target_link_libraries(nusystematics_dependencies INTERFACE 
-  fhiclcpp::fhiclcpp)
+  systtools::all)
 target_include_directories(nusystematics_dependencies INTERFACE 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
   $<INSTALL_INTERFACE:include> )
@@ -89,3 +98,4 @@ install(FILES "${PROJECT_BINARY_DIR}/nusystematicsConfigVersion.cmake"
 configure_file(${CMAKE_CURRENT_LIST_DIR}/cmake/Templates/setup.nusystematics.sh.in 
   ${PROJECT_BINARY_DIR}/setup.nusystematics.sh @ONLY)
 install(PROGRAMS ${PROJECT_BINARY_DIR}/setup.nusystematics.sh DESTINATION bin)
+
