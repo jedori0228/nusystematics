@@ -15,8 +15,9 @@ using namespace fhicl;
 
 SPPTpiReweight::SPPTpiReweight(ParameterSet const &params)
     : IGENIESystProvider_tool(params),
-      pidx_SPPTpiReweight(systtools::kParamUnhandled<size_t>),
       pidx_SPPQ2TemplateReweight(systtools::kParamUnhandled<size_t>),
+      pidx_SPPTpiReweight(systtools::kParamUnhandled<size_t>),
+      pidx_SPPTpiReweightMINERvA(systtools::kParamUnhandled<size_t>),
       valid_file(nullptr), valid_tree(nullptr) {}
 
 SystMetaData SPPTpiReweight::BuildSystMetaData(ParameterSet const &cfg,
@@ -26,7 +27,7 @@ SystMetaData SPPTpiReweight::BuildSystMetaData(ParameterSet const &cfg,
 
   SystMetaData smd;
   for (std::string const &pname :
-       {"SPPTpiReweight", "SPPQ2TemplateReweight"}){
+       {"SPPQ2TemplateReweight", "SPPTpiReweight", "SPPTpiReweightMINERvA"}){
     systtools::SystParamHeader phdr;
     if (ParseFhiclToolConfigurationParameter(cfg, pname, phdr, firstId)) {
       phdr.systParamId = firstId++;
@@ -47,14 +48,19 @@ bool SPPTpiReweight::SetupResponseCalculator(
 
   systtools::SystMetaData const &md = GetSystMetaData();
 
-  if (HasParam(md, "SPPTpiReweight")) {
-    pidx_SPPTpiReweight = 
-        GetParamIndex(md, "SPPTpiReweight");
-  }
   if (HasParam(md, "SPPQ2TemplateReweight")) {
     pidx_SPPQ2TemplateReweight = 
         GetParamIndex(md, "SPPQ2TemplateReweight");
   }
+  if (HasParam(md, "SPPTpiReweight")) {
+    pidx_SPPTpiReweight = 
+        GetParamIndex(md, "SPPTpiReweight");
+  }
+  if (HasParam(md, "SPPTpiReweightMINERvA")) {
+    pidx_SPPTpiReweight = 
+        GetParamIndex(md, "SPPTpiReweightMINERvA");
+  }
+
 
   fill_valid_tree = tool_options.get<bool>("fill_valid_tree", false);
   if (fill_valid_tree) {
@@ -70,11 +76,8 @@ SPPTpiReweight::GetEventResponse(genie::EventRecord const &ev) {
   // when the event is not applicable for this type of reweighting,
   // use GetDefaultEventResponse() to return an auto-1.-filled vector
 
-  if(SPPChannelFromGHep(ev) == genie::kSppNull){
-    return this->GetDefaultEventResponse();
-  }
-  int TargetA = ev.Summary()->InitState().Tgt().A();
-  if(TargetA==1){
+  bool IsCOH = ev.Summary()->ProcInfo().IsCoherentProduction();
+  if(IsCOH){
     return this->GetDefaultEventResponse();
   }
 
@@ -86,6 +89,7 @@ SPPTpiReweight::GetEventResponse(genie::EventRecord const &ev) {
   // find highest momentum final-state particle
   double max_mom_fs_pip = -999.;
   genie::GHepParticle *ptl_hm_fs_pip = 0;
+  int npi=0;
 
   while ( (p = dynamic_cast<genie::GHepParticle *>(event_iter.Next())) ) {
 
@@ -107,6 +111,7 @@ SPPTpiReweight::GetEventResponse(genie::EventRecord const &ev) {
 
   }//p
 
+  // no pion case
   if(ptl_hm_fs_pip==0){
     return this->GetDefaultEventResponse();
   }
@@ -126,18 +131,31 @@ SPPTpiReweight::GetEventResponse(genie::EventRecord const &ev) {
 
   systtools::SystMetaData const &md = GetSystMetaData();
 
-  if (pidx_SPPTpiReweight != systtools::kParamUnhandled<size_t>) {
-    resp.push_back( {md[pidx_SPPTpiReweight].systParamId, {}} );
-    for (double var : md[pidx_SPPTpiReweight].paramVariations) {
-      double this_reweight = GetSPPTpiReweight(this_Tpi_GeV, var);
-      resp.back().responses.push_back( this_reweight );
-    }
-  }
+  int TargetA = ev.Summary()->InitState().Tgt().A();
+  bool IsH = TargetA==1;
 
   if (pidx_SPPQ2TemplateReweight != systtools::kParamUnhandled<size_t>) {
     resp.push_back( {md[pidx_SPPQ2TemplateReweight].systParamId, {}} );
     for (double var : md[pidx_SPPQ2TemplateReweight].paramVariations) {
       double this_reweight = GetSPPQ2Reweight(this_Q2_GeV2, var);
+      if(IsH) resp.back().responses.push_back( 1. );
+      else resp.back().responses.push_back( this_reweight );
+    }
+  }
+
+  if (pidx_SPPTpiReweight != systtools::kParamUnhandled<size_t>) {
+    resp.push_back( {md[pidx_SPPTpiReweight].systParamId, {}} );
+    for (double var : md[pidx_SPPTpiReweight].paramVariations) {
+      double this_reweight = GetSPPTpiReweight(this_Tpi_GeV, var);
+      if(IsH) resp.back().responses.push_back( 1. );
+      else resp.back().responses.push_back( this_reweight );
+    }
+  }
+
+  if (pidx_SPPTpiReweightMINERvA != systtools::kParamUnhandled<size_t>) {
+    resp.push_back( {md[pidx_SPPTpiReweightMINERvA].systParamId, {}} );
+    for (double var : md[pidx_SPPTpiReweightMINERvA].paramVariations) {
+      double this_reweight = GetSPPTpiReweightMINERvA(this_Tpi_GeV, var);
       resp.back().responses.push_back( this_reweight );
     }
   }

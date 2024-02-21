@@ -37,8 +37,9 @@ private:
 
   fhicl::ParameterSet tool_options;
 
-  size_t pidx_SPPTpiReweight;
   size_t pidx_SPPQ2TemplateReweight;
+  size_t pidx_SPPTpiReweight;
+  size_t pidx_SPPTpiReweightMINERvA;
 
   void InitValidTree();
 
