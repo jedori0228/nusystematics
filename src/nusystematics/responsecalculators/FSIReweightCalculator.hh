@@ -29,10 +29,16 @@ namespace nusyst {
 
   protected:
 
-    TH2D *hist_hA2018_proton;
-    TH2D *hist_hN2018_proton;
-    TH2D *hist_INCL_proton;
-    TH2D *hist_G4BC_proton;
+    TH2D *hist_nom_proton;
+    TH2D *hist_alt_proton;
+    TH2D *hist_nom_neutron;
+    TH2D *hist_alt_neutron;
+    TH2D *hist_nom_pionp;
+    TH2D *hist_alt_pionp;
+    TH2D *hist_nom_pion0;
+    TH2D *hist_alt_pion0;
+    TH2D *hist_nom_pionm;
+    TH2D *hist_alt_pionm;
 
 
   public:
@@ -51,30 +57,44 @@ namespace nusyst {
   };
 
   inline double FSIReweightCalculator::GetFSIReweight(double KEini, double Ebias, double parameter_value, int parpdg){
-    TH2D *hist_hA2018, *hist_hN2018, *hist_INCL, *hist_G4BC;
+    TH2D *hist_nom, *hist_alt;
     if (parpdg == 2212) {
-      hist_hA2018 = hist_hA2018_proton;
-      hist_hN2018 = hist_hN2018_proton;
-      hist_INCL = hist_INCL_proton;
-      hist_G4BC = hist_G4BC_proton;
+      hist_nom = hist_nom_proton;
+      hist_alt = hist_alt_proton;
     }
-    //printf("[FSIReweightCalculator::GetFSIReweight] -> (Enu_GeV, kin_Y, kin_Z) = (%1.3f, %1.3f, %1.3f)\n", Enu_GeV_ForInterp, kin_Y_ForInterp, kin_Z_ForInterp);
-    int idx_KEini = hist_hA2018->GetXaxis()->FindBin(KEini);
-    int idx_Ebias = hist_hA2018->GetYaxis()->FindBin(Ebias);
-    double weight_hA2018 = hist_hA2018->GetBinContent(idx_KEini, idx_Ebias); // CV
-    double weight_hN2018 = hist_hN2018->GetBinContent(idx_KEini, idx_Ebias);
+    else if (parpdg == 2112) {
+      hist_nom = hist_nom_neutron;
+      hist_alt = hist_alt_neutron;
+    }
+    else if (parpdg == 211) {
+      hist_nom = hist_nom_pionp;
+      hist_alt = hist_alt_pionp;
+    }
+    else if (parpdg == 111) {
+      hist_nom = hist_nom_pion0;
+      hist_alt = hist_alt_pion0;
+    }
+    else if (parpdg == -211) {
+      hist_nom = hist_nom_pionm;
+      hist_alt = hist_alt_pionm;
+    }
+    else {
+      return 1.;
+    }
+    int idx_KEini = hist_nom->GetXaxis()->FindBin(KEini);
+    int idx_Ebias = hist_nom->GetYaxis()->FindBin(Ebias);
+    double weight_nom = hist_nom->GetBinContent(idx_KEini, idx_Ebias); // CV
+    double weight_alt = hist_alt->GetBinContent(idx_KEini, idx_Ebias);
     //cout<<"idx_KEini "<<idx_KEini<<"; idx_Ebias "<<idx_Ebias<<endl;
-    //cout<<"weight_hA2018 "<<weight_hA2018<<endl;
-    //cout<<"weight_hN2018 "<<weight_hN2018<<endl;
+    //cout<<"weight_nom "<<weight_nom<<endl;
+    //cout<<"weight_alt "<<weight_alt<<endl;
 
-    //printf("[FSIReweightCalculator::GetFSIReweight] xsec (With RPA, Without RPA) = (%1.3f, %1.3e)\n", weight_hA2018, weight_hN2018);
-
-    if(weight_hA2018==0.){
-      //cout<<"weight_hA2018==0."<<endl;
+    if(weight_nom==0.){
+      //cout<<"weight_nom==0."<<endl;
       return 1.;
     }
 
-    double weight = ( weight_hA2018 * (1.-parameter_value) + weight_hN2018 * parameter_value ) / weight_hA2018;
+    double weight = ( weight_nom * (1.-parameter_value) + weight_alt * parameter_value ) / weight_nom;
     //cout<<"weight "<<weight<<endl;
 
     return weight;
@@ -100,11 +120,35 @@ namespace nusyst {
         input_file = tmp_NUSYSTEMATICS_ROOT+"/data/"+input_file;
       }
 
-      if(hName=="hist_hA2018_proton"){
-        hist_hA2018_proton = GetHistogram<TH2D>(input_file, input_hist);
+      if(hName=="hist_nom_proton"){
+        hist_nom_proton = GetHistogram<TH2D>(input_file, input_hist);
       }
-      else if(hName=="hist_hN2018_proton"){
-        hist_hN2018_proton = GetHistogram<TH2D>(input_file, input_hist);
+      else if(hName=="hist_alt_proton"){
+        hist_alt_proton = GetHistogram<TH2D>(input_file, input_hist);
+      }
+      else if(hName=="hist_nom_neutron"){
+        hist_nom_neutron = GetHistogram<TH2D>(input_file, input_hist);
+      }
+      else if(hName=="hist_alt_neutron"){
+        hist_alt_neutron = GetHistogram<TH2D>(input_file, input_hist);
+      }
+      else if(hName=="hist_nom_pionp"){
+        hist_nom_pionp = GetHistogram<TH2D>(input_file, input_hist);
+      }
+      else if(hName=="hist_alt_pionp"){
+        hist_alt_pionp = GetHistogram<TH2D>(input_file, input_hist);
+      }
+      else if(hName=="hist_nom_pion0"){
+        hist_nom_pion0 = GetHistogram<TH2D>(input_file, input_hist);
+      }
+      else if(hName=="hist_alt_pion0"){
+        hist_alt_pion0 = GetHistogram<TH2D>(input_file, input_hist);
+      }
+      else if(hName=="hist_nom_pionm"){
+        hist_nom_pionm = GetHistogram<TH2D>(input_file, input_hist);
+      }
+      else if(hName=="hist_alt_pionm"){
+        hist_alt_pionm = GetHistogram<TH2D>(input_file, input_hist);
       }
     }
   }

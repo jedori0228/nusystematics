@@ -17,7 +17,7 @@
 class FSIReweight : public nusyst::IGENIESystProvider_tool {
 
   std::unique_ptr<nusyst::FSIReweightCalculator> fsiReweightCalculator;
-  TFile* savemap = new TFile("FSI_2Dmap.root", "update");
+  TFile* savemap = new TFile("FSI_2Dmap.root", "recreate"); // compare the 2D maps
   TH2D* h_KEini_Ebias = new TH2D("h_KEini_Ebias", "Ebias vs KEini; KEini [GeV]; Ebias [GeV]", 40, 0, 2, 40, -0.9, 1.1);
 public:
   explicit FSIReweight(fhicl::ParameterSet const &);
@@ -56,10 +56,10 @@ void get_FS_daughters(genie::GHepParticle* par, vector<genie::GHepParticle*>& FS
     FSdaughters.push_back(par);
     return;
   }
-  if (par->FirstDaughter()==-1) {
-    cout<<"No daughter for this particle..."<<endl;
-    return;
-  }
+  //if (par->FirstDaughter()==-1) {
+  //  cout<<"No daughter for this particle..."<<endl;
+  //  return;
+  //}
   for (int ip=par->FirstDaughter(); ip<=par->LastDaughter(); ip++) {
     get_FS_daughters(ev.Particle(ip), FSdaughters, ev);
   }

@@ -101,21 +101,21 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
   //ev.Print();
   //std::cout<<std::endl;
 
-  vector<genie::GHepParticle*> priorFShadron_list;
+  vector<genie::GHepParticle*> preFSIhadron_list;
   /*for (int ip=ISHitNucleon->FirstDaughter(); ip<=ISHitNucleon->LastDaughter(); ip++) {
-    genie::GHepParticle *priorFShadron = ev.Particle(ip);
-    cout<<priorFShadron->Pdg()<<"\t"<<priorFShadron->Status()<<endl;
-    if (priorFShadron->Status() == 14)
-      priorFShadron_list.push_back(priorFShadron);
+    genie::GHepParticle *preFSIhadron = ev.Particle(ip);
+    cout<<preFSIhadron->Pdg()<<"\t"<<preFSIhadron->Status()<<endl;
+    if (preFSIhadron->Status() == 14)
+      preFSIhadron_list.push_back(preFSIhadron);
   }*/
   TObjArrayIter piter(&ev);
   genie::GHepParticle * par = 0;
   while( (par = (genie::GHepParticle *) piter.Next()) ) {
     if (par->Status() == 14) {
       if (ev.Particle(par->FirstMother())->Status() == 14) continue;
-      priorFShadron_list.push_back(par);
+      preFSIhadron_list.push_back(par);
     }
-  } // get all prior FS hadrons
+  } // get all pre-FSI hadrons
   
   TLorentzVector FSLepP4 = *FSLep->P4(); // l
   TLorentzVector ISLepP4 = *ISLep->P4(); // nu
@@ -136,19 +136,15 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
   resp.push_back( {hdr.systParamId, {}} );
   for (double var : hdr.paramVariations) {
     double weight = 1;
-    if (priorFShadron_list.size()<1) { // the number of pre-FSI particles
+    if (!(preFSIhadron_list.size()==2)) { // selection on the number of pre-FSI particles
       weight = -199;
+      //weight = 1; // do not reweight events with no pre-FSI particles at all
     }
     else {
-      for (auto IShad : priorFShadron_list) {
-        if (IShad->Pdg() != 2212) { // only for proton for test
+      for (auto IShad : preFSIhadron_list) {
+        if (!(IShad->Pdg()==2112)) { // selection on proton-only for test
           weight = -99;
           break;
-          continue;
-        }
-        if (IShad->RescatterCode()==1) { // non-FSI
-          //weight = 1.6;
-          continue;
         }
         if (IShad->FirstDaughter()==-1) {
           //cout<<"No daughter particle for this pre-FSI hadron..."<<endl; // due to no daughter info in INCL and G4BC
@@ -171,15 +167,41 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
             ;
           else if ( pdg==22 ) // gamma
             Ehad += totE;
-          else cout<<"$#@ "<<FSpar->Name()<<endl;
+          //else cout<<"$#@ "<<FSpar->Name()<<endl;
         }
-        double Ebias = (KEini - Ehad) / KEini; // proton
-        //double Ebias = (Eini - Ehad) / Eini; // pion
+        double Ebias = 0;
+        
+        if (IShad->RescatterCode()==1) { // non-FSI
+          //weight = 1.6;
+          continue;
+        }
+        switch (IShad->Pdg()) {
+          case 2212:
+            Ebias = (KEini - Ehad) / KEini;
+            //h_KEini_Ebias->Fill( KEini, Ebias );
+            break;
+          case 2112:
+            Ebias = (KEini - Ehad) / KEini;
+            break;
+          case 211:
+            Ebias = (Eini - Ehad) / Eini;
+            break;
+          case 111:
+            Ebias = (Eini - Ehad) / Eini;
+            break;
+          case -211:
+            Ebias = (Eini - Ehad) / Eini;
+            break;
+          default:
+            weight = -99;
+            break;
+            weight = 1;
+            continue;
+        }
         //cout<<IShad->Name()<<": KEini "<<KEini<<"; Ehad "<<Ehad<<"; Ebias "<<Ebias<<endl;
         double this_reweight = fsiReweightCalculator->GetFSIReweight(KEini, Ebias, var, IShad->Pdg());
         weight *= this_reweight;
-        h_KEini_Ebias->Fill( KEini, Ebias );
-        //cout<<KEini<<"\t"<<Ebias<<"\t"<<this_reweight<<endl;
+        //cout<<IShad->Name()<<": KEini "<<KEini<<"; Ebias "<<Ebias<<"; weight "<<this_reweight<<endl;
       }
     }
     resp.back().responses.push_back( weight );
