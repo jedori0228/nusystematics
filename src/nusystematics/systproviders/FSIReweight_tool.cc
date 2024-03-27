@@ -136,13 +136,16 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
   resp.push_back( {hdr.systParamId, {}} );
   for (double var : hdr.paramVariations) {
     double weight = 1;
-    if (!(preFSIhadron_list.size()==2)) { // selection on the number of pre-FSI particles
+    if (!(preFSIhadron_list.size()==1)) { // selection on the number of pre-FSI particles
       weight = -199;
       //weight = 1; // do not reweight events with no pre-FSI particles at all
     }
     else {
+      double KEini_0, KEini_1;
+      double Ehad_tot = 0;
+      int idx = 0;
       for (auto IShad : preFSIhadron_list) {
-        if (!(IShad->Pdg()==2112)) { // selection on proton-only for test
+        if (!(IShad->Pdg()==2212)) { // selection on proton-only for test
           weight = -99;
           break;
         }
@@ -170,11 +173,19 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
           //else cout<<"$#@ "<<FSpar->Name()<<endl;
         }
         double Ebias = 0;
+        if (idx==0) {
+          KEini_0 = KEini;
+          idx++;
+        }
+        else {
+          KEini_1 = KEini;
+        }
         
         if (IShad->RescatterCode()==1) { // non-FSI
           //weight = 1.6;
           continue;
         }
+        Ehad_tot += Ehad;
         switch (IShad->Pdg()) {
           case 2212:
             Ebias = (KEini - Ehad) / KEini;
@@ -199,10 +210,17 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
             continue;
         }
         //cout<<IShad->Name()<<": KEini "<<KEini<<"; Ehad "<<Ehad<<"; Ebias "<<Ebias<<endl;
-        double this_reweight = fsiReweightCalculator->GetFSIReweight(KEini, Ebias, var, IShad->Pdg());
-        weight *= this_reweight;
+        //double this_reweight = fsiReweightCalculator->GetFSIReweight(KEini, Ebias, var, IShad->Pdg());
+        //weight *= this_reweight;
         //cout<<IShad->Name()<<": KEini "<<KEini<<"; Ebias "<<Ebias<<"; weight "<<this_reweight<<endl;
       }
+      double tmp = KEini_0;
+      if (tmp<KEini_1) {
+        KEini_0 = KEini_1;
+        KEini_1 = tmp;
+      }
+      double Ebias = (KEini_0+KEini_1-Ehad_tot)/(KEini_0+KEini_1);
+      weight = fsiReweightCalculator->GetFSIReweight_2par(KEini_0, KEini_1, Ebias, var, 2);
     }
     resp.back().responses.push_back( weight );
   }

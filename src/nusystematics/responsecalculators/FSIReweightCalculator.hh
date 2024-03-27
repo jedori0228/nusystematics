@@ -39,6 +39,8 @@ namespace nusyst {
     TH2D *hist_alt_pion0;
     TH2D *hist_nom_pionm;
     TH2D *hist_alt_pionm;
+    TH3D *hist_nom_2p;
+    TH3D *hist_alt_2p;
 
 
   public:
@@ -51,6 +53,7 @@ namespace nusyst {
     void LoadInputHistograms(fhicl::ParameterSet const &ps);
 
     double GetFSIReweight(double KEini, double Ebias, double parameter_value, int parpdg);
+    double GetFSIReweight_2par(double KEini_0, double KEini_1, double Ebias, double parameter_value, int parpdg);
 
     std::string GetCalculatorName() const { return "FSIReweightCalculator"; }
 
@@ -101,6 +104,33 @@ namespace nusyst {
 
   }
 
+inline double FSIReweightCalculator::GetFSIReweight_2par(double KEini_0, double KEini_1, double Ebias, double parameter_value, int parpdg){
+  TH3D *hist_nom, *hist_alt;
+  
+  hist_nom = hist_nom_2p;
+  hist_alt = hist_alt_2p;
+
+  int idx_KEini_0 = hist_nom->GetXaxis()->FindBin(KEini_0);
+  int idx_KEini_1 = hist_nom->GetYaxis()->FindBin(KEini_1);
+  int idx_Ebias = hist_nom->GetZaxis()->FindBin(Ebias);
+  double weight_nom = hist_nom->GetBinContent(idx_KEini_0, idx_KEini_1, idx_Ebias); // CV
+  double weight_alt = hist_alt->GetBinContent(idx_KEini_0, idx_KEini_1, idx_Ebias);
+  //cout<<"idx_KEini "<<idx_KEini<<"; idx_Ebias "<<idx_Ebias<<endl;
+  //cout<<"weight_nom "<<weight_nom<<endl;
+  //cout<<"weight_alt "<<weight_alt<<endl;
+
+  if(weight_nom==0.){
+    //cout<<"weight_nom==0."<<endl;
+    return 1.;
+  }
+
+  double weight = ( weight_nom * (1.-parameter_value) + weight_alt * parameter_value ) / weight_nom;
+  //cout<<"weight "<<weight<<endl;
+
+  return weight;
+
+}
+
   inline void FSIReweightCalculator::LoadInputHistograms(fhicl::ParameterSet const &ps) {
 
     std::string const &default_root_file = ps.get<std::string>("input_file", "");
@@ -149,6 +179,12 @@ namespace nusyst {
       }
       else if(hName=="hist_alt_pionm"){
         hist_alt_pionm = GetHistogram<TH2D>(input_file, input_hist);
+      }
+      else if(hName=="hist_nom_2p"){
+        hist_nom_2p = GetHistogram<TH3D>(input_file, input_hist);
+      }
+      else if(hName=="hist_alt_2p"){
+        hist_alt_2p = GetHistogram<TH3D>(input_file, input_hist);
       }
     }
   }
