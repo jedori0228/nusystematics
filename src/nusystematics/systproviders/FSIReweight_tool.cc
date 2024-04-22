@@ -134,9 +134,15 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
 
   SystParamHeader const &hdr = GetSystMetaData()[ResponseParameterIdx];
   resp.push_back( {hdr.systParamId, {}} );
+  vector<int> npar_sel = {1, 0, 1, 0, 0}; // edit the number of {p, n, pip, pi0, pim}
+  int np = 0;
+  for (int num : npar_sel) { np += num; }
+  map<int,int> npar_idx;
+  npar_idx[2212] = 0; npar_idx[2112] = 1; npar_idx[211] = 2; npar_idx[111] = 3; npar_idx[-211] = 4;
+  vector<int> npar = {0, 0, 0, 0, 0};
   for (double var : hdr.paramVariations) {
     double weight = 1;
-    if (!(preFSIhadron_list.size()==1)) { // selection on the number of pre-FSI particles
+    if (false&&!(preFSIhadron_list.size() == np)) { // selection on the number of pre-FSI particles
       weight = -199;
       //weight = 1; // do not reweight events with no pre-FSI particles at all
     }
@@ -144,11 +150,21 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
       double KEini_0, KEini_1;
       double Ehad_tot = 0;
       int idx = 0;
+      bool rewei = true;
       for (auto IShad : preFSIhadron_list) {
-        if (!(IShad->Pdg()==2212)) { // selection on proton-only for test
+        //if (!(IShad->Pdg()==2212||IShad->Pdg()==211)) { // selection on proton-only for test
+        //  weight = -99;
+        //  rewei = false;
+        //  break;
+        //}
+        int had_pdg = npar_idx[ IShad->Pdg() ];
+        ++npar[had_pdg];
+        if (false&&(npar[had_pdg] > npar_sel[had_pdg])) {
           weight = -99;
+          rewei = false;
           break;
         }
+        
         if (IShad->FirstDaughter()==-1) {
           //cout<<"No daughter particle for this pre-FSI hadron..."<<endl; // due to no daughter info in INCL and G4BC
           continue;
@@ -204,23 +220,25 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
             Ebias = (Eini - Ehad) / Eini;
             break;
           default:
-            weight = -99;
-            break;
+            //weight = -99;
+            //break;
             weight = 1;
             continue;
         }
         //cout<<IShad->Name()<<": KEini "<<KEini<<"; Ehad "<<Ehad<<"; Ebias "<<Ebias<<endl;
-        //double this_reweight = fsiReweightCalculator->GetFSIReweight(KEini, Ebias, var, IShad->Pdg());
-        //weight *= this_reweight;
+        double this_reweight = fsiReweightCalculator->GetFSIReweight(KEini, Ebias, var, IShad->Pdg());
+        weight *= this_reweight;
         //cout<<IShad->Name()<<": KEini "<<KEini<<"; Ebias "<<Ebias<<"; weight "<<this_reweight<<endl;
       }
-      double tmp = KEini_0;
-      if (tmp<KEini_1) {
-        KEini_0 = KEini_1;
-        KEini_1 = tmp;
-      }
-      double Ebias = (KEini_0+KEini_1-Ehad_tot)/(KEini_0+KEini_1);
-      weight = fsiReweightCalculator->GetFSIReweight_2par(KEini_0, KEini_1, Ebias, var, 2);
+      //if (rewei) {
+      //  double tmp = KEini_0;
+      //  if (tmp<KEini_1) {
+      //    KEini_0 = KEini_1;
+      //    KEini_1 = tmp;
+      //  }
+      //  double Ebias = (KEini_0+KEini_1-Ehad_tot)/(KEini_0+KEini_1);
+      //  weight = fsiReweightCalculator->GetFSIReweight_2par(KEini_0, KEini_1, Ebias, var, 2);
+      //}
     }
     resp.back().responses.push_back( weight );
   }
