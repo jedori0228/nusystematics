@@ -134,7 +134,8 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
 
   SystParamHeader const &hdr = GetSystMetaData()[ResponseParameterIdx];
   resp.push_back( {hdr.systParamId, {}} );
-  vector<int> npar_sel = {1, 0, 1, 0, 0}; // edit the number of {p, n, pip, pi0, pim}
+  vector<int> npar_sel = {1, 0, 0, 0, 0}; // edit the number of {p, n, pip, pi0, pim} (temporarily added inline for test, should be added as parameters in fcl file)
+  bool allevents = true; // if allevents==true, npar_sel will be disabled
   int np = 0;
   for (int num : npar_sel) { np += num; }
   map<int,int> npar_idx;
@@ -142,7 +143,7 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
   vector<int> npar = {0, 0, 0, 0, 0};
   for (double var : hdr.paramVariations) {
     double weight = 1;
-    if (false&&!(preFSIhadron_list.size() == np)) { // selection on the number of pre-FSI particles
+    if ((!allevents)&&!(preFSIhadron_list.size() == np)) { // selection on the number of pre-FSI particles
       weight = -199;
       //weight = 1; // do not reweight events with no pre-FSI particles at all
     }
@@ -159,7 +160,7 @@ FSIReweight::GetEventResponse(genie::EventRecord const &ev) {
         //}
         int had_pdg = npar_idx[ IShad->Pdg() ];
         ++npar[had_pdg];
-        if (false&&(npar[had_pdg] > npar_sel[had_pdg])) {
+        if ((!allevents)&&(npar[had_pdg] > npar_sel[had_pdg])) {
           weight = -99;
           rewei = false;
           break;
