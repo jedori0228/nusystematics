@@ -17,6 +17,7 @@ SET(RSPC_HDRFILES
   nuenuebar_xsec_ratio.hh
   CCQERPAReweightCalculator.hh
   FSIReweightCalculator.hh
+  DIRT2_EmissEngine_Reweight.hh
 )
 
 

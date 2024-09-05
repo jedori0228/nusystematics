@@ -13,6 +13,9 @@
 #include "nusystematics/systproviders/NOvAStyleNonResPionNorm_tool.hh"
 #include "nusystematics/systproviders/CCQERPAReweight_tool.hh"
 #include "nusystematics/systproviders/FSIReweight_tool.hh"
+#include "nusystematics/systproviders/SkeleWeighter_tool.hh"
+#include "nusystematics/systproviders/ZExpPCAWeighter_tool.hh"
+#include "nusystematics/systproviders/DIRT2_Emiss_tool.hh"
 
 #include "fhiclcpp/ParameterSet.h"
 
@@ -48,6 +51,12 @@ make_instance(fhicl::ParameterSet const &paramset) {
     return std::make_unique<CCQERPAReweight>(paramset);
   } else if (tool_type == "FSIReweight"){
   return std::make_unique<FSIReweight>(paramset);
+  } else if (tool_type == "SkeleWeighter") {
+    return std::make_unique<SkeleWeighter>(paramset);
+  } else if (tool_type == "ZExpPCAWeighter") {
+    return std::make_unique<ZExpPCAWeighter>(paramset);
+  } else if (tool_type == "DIRT2_Emiss") {
+    return std::make_unique<DIRT2_Emiss>(paramset);
   } else {
     throw unknown_nusyst_systprovider()
         << "[ERROR]: Unknown tool type: " << std::quoted(tool_type);

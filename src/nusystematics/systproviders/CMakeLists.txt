@@ -10,13 +10,16 @@ SET(SYSTP_IMPLFILES
   NOvAStyleNonResPionNorm_tool.cc
   CCQERPAReweight_tool.cc
   FSIReweight_tool.cc
+  DIRT2_Emiss_tool.cc
   )
 
 if(GENIEReWeight_ENABLED)
   LIST(APPEND SYSTP_IMPLFILES
     GENIEReWeightEngineConfig.cc
     GENIEReWeightParamConfig.cc
-    GENIEReWeight_tool.cc)
+    GENIEReWeight_tool.cc
+    SkeleWeighter_tool.cc
+    ZExpPCAWeighter_tool.cc)
 endif()
 
 SET(SYSTP_HDRFILES
@@ -30,6 +33,7 @@ SET(SYSTP_HDRFILES
   NOvAStyleNonResPionNorm_tool.hh
   CCQERPAReweight_tool.hh
   FSIReweight_tool.hh
+  DIRT2_Emiss_tool.hh
 )
 
 if(GENIEReWeight_ENABLED)
@@ -37,7 +41,9 @@ if(GENIEReWeight_ENABLED)
     GENIEReWeightEngineConfig.hh
     GENIEReWeightParamConfig.hh
     GENIEReWeight_tool.hh
-    GENIEResponseParameterAssociation.hh)
+    GENIEResponseParameterAssociation.hh
+    SkeleWeighter_tool.hh
+    ZExpPCAWeighter_tool.hh)
 endif()
 
 add_library(nusystematics_systproviders SHARED ${SYSTP_IMPLFILES})
@@ -47,7 +53,7 @@ set_target_properties(nusystematics_systproviders PROPERTIES
   PUBLIC_HEADER "${SYSTP_HDRFILES}"
   EXPORT_NAME systproviders )
 
-target_link_libraries(nusystematics_systproviders PUBLIC nusyst::responsecalculators systtools::all)
+target_link_libraries(nusystematics_systproviders PUBLIC nusyst::responsecalculators systtools::all Eigen3::Eigen)
 
 install(TARGETS nusystematics_systproviders
     EXPORT nusyst-targets
