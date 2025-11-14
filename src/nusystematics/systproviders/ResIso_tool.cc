@@ -118,6 +118,31 @@ bool ResIso::SetupResponseCalculator(
   return true;
 }
 
+systtools::event_unit_response_t ResIso::GetDefaultEventResponse(genie::EventRecord const &ev) const {
+
+  SystMetaData const &md = GetSystMetaData();
+  systtools::event_unit_response_t resp;
+
+  // loop through and calculate weights
+  for (size_t i = 0; i < dial_infos.size(); ++i) {
+    // this parameter wasn't configured, nothing to do
+    if (pidx_Params[i] == kParamUnhandled<size_t>) {
+      continue;
+    }
+
+    auto param_id = md[pidx_Params[i]].systParamId;
+    // initialize the response array with this paramId
+    resp.push_back({param_id, {}});
+    for (size_t v_it = 0; v_it < Variations[i].size(); ++v_it) {
+      resp.back().responses.push_back(1.);
+    }
+
+  }
+
+  return resp;
+
+}
+
 event_unit_response_t
 ResIso::GetEventResponse(genie::EventRecord const &ev) {
 
@@ -127,7 +152,7 @@ ResIso::GetEventResponse(genie::EventRecord const &ev) {
   // return early if this event isn't one we provide responses for
   if (!ev.Summary()->ProcInfo().IsResonant() ||
       !ev.Summary()->ProcInfo().IsWeakCC()) {
-    return resp;
+    return this->GetDefaultEventResponse(ev);
   }
 
   // loop through and calculate weights
@@ -137,20 +162,21 @@ ResIso::GetEventResponse(genie::EventRecord const &ev) {
       continue;
     }
 
-    if (ev.Summary()->ExclTagPtr()->Resonance() != dial_infos[i].rescode) {
-      continue;
-    }
-
     auto param_id = md[pidx_Params[i]].systParamId;
     // initialize the response array with this paramId
     resp.push_back({param_id, {}});
 
+    bool ResCodeMatched = ev.Summary()->ExclTagPtr()->Resonance() == dial_infos[i].rescode;
+
     // loop through variations for this parameter
     for (size_t v_it = 0; v_it < Variations[i].size(); ++v_it) {
-
       // put the response weight for this variation of this parameter into the
       // response object
-      resp.back().responses.push_back(ReWeightEngines[i][v_it].CalcWeight(ev));
+      resp.back().responses.push_back(
+        ResCodeMatched ?
+        ReWeightEngines[i][v_it].CalcWeight(ev) :
+        1.
+      );
       if (verbosity_level > 3) {
         std::cout << "[DEBG]: For parameter " << md[pidx_Params[i]].prettyName
                   << " at variation[" << v_it << "] = " << Variations[i][v_it]

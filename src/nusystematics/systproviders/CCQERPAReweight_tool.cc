@@ -130,7 +130,11 @@ CCQERPAReweight::GetEventResponse(genie::EventRecord const &ev) {
 
   std::array<double, 2> bin_kin;
   if(rwMode==q3q0){
-    bin_kin = {emTransfer.Vect().Mag(), emTransfer.E()};
+    //bin_kin = {emTransfer.Vect().Mag(), emTransfer.E()};
+    // TEST; cutoff for non-physical reweights
+    double this_q3 = emTransfer.Vect().Mag();
+    double this_q0 = emTransfer.E()>1.46 ? 1.46 : emTransfer.E();
+    bin_kin = {this_q3, this_q0};
   }
   else if(rwMode==PCTheta){
     bin_kin = {FSLepP4.Vect().Mag(), CAngleLeps};

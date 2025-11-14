@@ -22,6 +22,7 @@
 #include "Framework/GHEP/GHepRecord.h"
 #include "Framework/Messenger/Messenger.h"
 #include "Framework/Ntuple/NtpMCEventRecord.h"
+#include "Framework/Conventions/Units.h"
 
 #include "TObjString.h"
 #include "TChain.h"
@@ -34,7 +35,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
+#include <cmath>
 using namespace systtools;
 using namespace nusyst;
 using namespace genie;
@@ -43,14 +44,16 @@ using namespace genie::rew;
 NEW_SYSTTOOLS_EXCEPT(unexpected_number_of_responses);
 
 struct TweakSummaryTree {
-  TFile *f;
-  TTree *t;
-  TTree *m;
+  TFile *f = NULL;
+  TTree *t = NULL;
+  TTree *m = NULL;
 
-  TweakSummaryTree(std::string const &fname) {
+  TweakSummaryTree(std::string const &fname, bool AddWeights) {
     f = new TFile(fname.c_str(), "RECREATE");
     t = new TTree("events", "");
-    m = new TTree("tweak_metadata", "");
+    if(AddWeights){
+      m = new TTree("tweak_metadata", "");
+    }
     t->SetDirectory(f);
   }
   ~TweakSummaryTree() {
@@ -61,8 +64,12 @@ struct TweakSummaryTree {
 
   // TH: Add variables for for output weight tree
   int Mode, nucleon_pdg, target_pdg;
-  float Emiss, Emiss_preFSI, pmiss, pmiss_preFSI, q0, Enu_true, plep, q3, Q2;
+  std::string Mode_str;
+  double xsec;
+  double Emiss, Emiss_preFSI, pmiss, pmiss_preFSI;
   double Emiss_GENIE;
+  double q0, Enu_true, q3, Q2, w;
+  double plep;
   int nu_pdg;
   double e_nu_GeV;
   int tgt_A;
@@ -74,13 +81,14 @@ struct TweakSummaryTree {
   bool is_res;
   int res_channel;
   bool is_dis;
-  double W_GeV;
-  double Q2_GeV2;
-  double q0_GeV;
-  double q3_GeV;
   double EAvail_GeV;
   std::vector<int> fsi_pdgs;
   std::vector<int> fsi_codes;
+  // TKI
+  std::vector<double> fsprotons_KE;
+  double deltaPT, deltaalphaT;
+  // Experimenting signal selection here..
+  bool IsSignal_ICARUS_1muNp0pi;
 
   std::vector<int> ntweaks;
   std::vector<std::vector<double>> tweak_branches;
@@ -95,22 +103,24 @@ struct TweakSummaryTree {
     
     // TH: Add branches for output weights tree
     t->Branch("Mode", &Mode, "Mode/I");
-    t->Branch("Emiss", &Emiss, "Emiss/F");
-    t->Branch("Emiss_preFSI", &Emiss_preFSI, "Emiss_preFSI/F");
+    t->Branch("Mode_str", &Mode_str);
+    t->Branch("xsec", &xsec, "xsec/D");
+    t->Branch("Emiss", &Emiss, "Emiss/D");
+    t->Branch("Emiss_preFSI", &Emiss_preFSI, "Emiss_preFSI/D");
     t->Branch("Emiss_GENIE", &Emiss_GENIE, "Emiss_GENIE/D");
-    t->Branch("pmiss", &pmiss, "pmiss/F");
-    t->Branch("pmiss_preFSI", &pmiss_preFSI, "pmiss_preFSI/F");
-    t->Branch("q0", &q0, "q0/F");
-    t->Branch("Q2", &Q2, "Q2/F");
-    t->Branch("q3", &q3, "q3/F");
-    t->Branch("Enu_true", &Enu_true, "Enu_true/F");
-    t->Branch("plep", &plep, "plep/F");
+    t->Branch("pmiss", &pmiss, "pmiss/D");
+    t->Branch("pmiss_preFSI", &pmiss_preFSI, "pmiss_preFSI/D");
+    t->Branch("q0", &q0, "q0/D");
+    t->Branch("Q2", &Q2, "Q2/D");
+    t->Branch("q3", &q3, "q3/D");
+    t->Branch("w", &w, "w/D");
+    t->Branch("Enu_true", &Enu_true, "Enu_true/D");
+    t->Branch("nu_pdg", &nu_pdg, "nu_pdg/I");
+    t->Branch("plep", &plep, "plep/D");
     t->Branch("nucleon_pdg", &nucleon_pdg, "nucleon_pdg/I");
     t->Branch("target_pdg", &target_pdg, "target_pdg/I");
       
     size_t vector_idx = 0;
-    t->Branch("nu_pdg", &nu_pdg, "nu_pdg/I");
-    t->Branch("e_nu_GeV", &e_nu_GeV, "e_nu_GeV/D");
     t->Branch("tgt_A", &tgt_A, "tgt_A/I");
     t->Branch("tgt_Z", &tgt_Z, "tgt_Z/I");
     t->Branch("is_cc", &is_cc, "is_cc/O");
@@ -120,78 +130,84 @@ struct TweakSummaryTree {
     t->Branch("is_res", &is_res, "is_res/O");
     t->Branch("res_channel", &res_channel, "res_channel/I");
     t->Branch("is_dis", &is_dis, "is_dis/O");
-    t->Branch("W_GeV", &W_GeV, "W_GeV/D");
-    t->Branch("Q2_GeV2", &Q2_GeV2, "Q2_GeV2/D");
-    t->Branch("q0_GeV", &q0_GeV, "q0_GeV/D");
-    t->Branch("q3_GeV", &q3_GeV, "q3_GeV/D");
     t->Branch("EAvail_GeV", &EAvail_GeV, "EAvail_GeV/D");
     t->Branch("fsi_pdgs", "vector<int>", &fsi_pdgs);
     t->Branch("fsi_codes", "vector<int>", &fsi_codes);
+    t->Branch("fsprotons_KE", "vector<double>", &fsprotons_KE);
+    t->Branch("deltaPT", &deltaPT, "deltaPT/D");
+    t->Branch("deltaalphaT", &deltaalphaT, "deltaalphaT/D");
+    t->Branch("IsSignal_ICARUS_1muNp0pi", &IsSignal_ICARUS_1muNp0pi, "IsSignal_ICARUS_1muNp0pi/O");
 
-    for (paramId_t pid : phh.GetParameters()) { // Need to size vectors first so
-                                                // that realloc doesn't upset
-                                                // the TBranches
-      SystParamHeader const &hdr = phh.GetHeader(pid);
-      if (hdr.isResponselessParam) {
-        continue;
+
+    if(m){
+
+      for (paramId_t pid : phh.GetParameters()) { // Need to size vectors first so
+                                                  // that realloc doesn't upset
+                                                  // the TBranches
+        SystParamHeader const &hdr = phh.GetHeader(pid);
+        if (hdr.isResponselessParam) {
+          continue;
+        }
+
+        if (hdr.isCorrection) {
+          ntweaks.emplace_back(1);
+        } else {
+          ntweaks.emplace_back(hdr.paramVariations.size());
+        }
+        tweak_branches.emplace_back();
+        std::fill_n(std::back_inserter(tweak_branches.back()), ntweaks.back(), 1);
+        tweak_indices[pid] = vector_idx;
+
+        if (ntweaks.back() > int(meta_tweak_values.size())) {
+          meta_tweak_values.resize(ntweaks.back());
+        }
+        vector_idx++;
+      }
+      std::fill_n(std::back_inserter(paramCVResponses), ntweaks.size(), 1);
+
+      meta_name = nullptr;
+      m->Branch("name", &meta_name);
+      m->Branch("ntweaks", &meta_n, "ntweaks/I");
+      m->Branch("tweakvalues", meta_tweak_values.data(),
+                "tweakvalues[ntweaks]/D");
+
+      for (paramId_t pid : phh.GetParameters()) {
+        SystParamHeader const &hdr = phh.GetHeader(pid);
+        if (hdr.isResponselessParam) {
+          continue;
+        }
+        size_t idx = tweak_indices[pid];
+
+        std::stringstream ss_ntwk("");
+        ss_ntwk << "ntweaks_" << hdr.prettyName;
+        t->Branch(ss_ntwk.str().c_str(), &ntweaks[idx],
+                  (ss_ntwk.str() + "/I").c_str());
+
+        std::stringstream ss_twkr("");
+        ss_twkr << "tweak_responses_" << hdr.prettyName;
+        t->Branch(ss_twkr.str().c_str(), tweak_branches[idx].data(),
+                  (ss_twkr.str() + "[" + ss_ntwk.str() + "]/D").c_str());
+
+        std::stringstream ss_twkcv("");
+        ss_twkcv << "paramCVWeight_" << hdr.prettyName;
+        t->Branch(ss_twkcv.str().c_str(), &paramCVResponses[idx],
+                  (ss_twkcv.str() + "/D").c_str());
+
+        *meta_name = hdr.prettyName.c_str();
+        meta_n = ntweaks[idx];
+        // For a correction dial, hdr.paramVariations is empty, so manually fill the vector
+        if (hdr.isCorrection) {
+          meta_tweak_values[0] = hdr.centralParamValue;
+        } else {
+          std::copy_n(hdr.paramVariations.begin(), meta_n,
+                      meta_tweak_values.begin());
+        }
+
+        m->Fill();
       }
 
-      if (hdr.isCorrection) {
-        ntweaks.emplace_back(1);
-      } else {
-        ntweaks.emplace_back(hdr.paramVariations.size());
-      }
-      tweak_branches.emplace_back();
-      std::fill_n(std::back_inserter(tweak_branches.back()), ntweaks.back(), 1);
-      tweak_indices[pid] = vector_idx;
+    } // IF m set
 
-      if (ntweaks.back() > int(meta_tweak_values.size())) {
-        meta_tweak_values.resize(ntweaks.back());
-      }
-      vector_idx++;
-    }
-    std::fill_n(std::back_inserter(paramCVResponses), ntweaks.size(), 1);
-
-    meta_name = nullptr;
-    m->Branch("name", &meta_name);
-    m->Branch("ntweaks", &meta_n, "ntweaks/I");
-    m->Branch("tweakvalues", meta_tweak_values.data(),
-              "tweakvalues[ntweaks]/D");
-
-    for (paramId_t pid : phh.GetParameters()) {
-      SystParamHeader const &hdr = phh.GetHeader(pid);
-      if (hdr.isResponselessParam) {
-        continue;
-      }
-      size_t idx = tweak_indices[pid];
-
-      std::stringstream ss_ntwk("");
-      ss_ntwk << "ntweaks_" << hdr.prettyName;
-      t->Branch(ss_ntwk.str().c_str(), &ntweaks[idx],
-                (ss_ntwk.str() + "/I").c_str());
-
-      std::stringstream ss_twkr("");
-      ss_twkr << "tweak_responses_" << hdr.prettyName;
-      t->Branch(ss_twkr.str().c_str(), tweak_branches[idx].data(),
-                (ss_twkr.str() + "[" + ss_ntwk.str() + "]/D").c_str());
-
-      std::stringstream ss_twkcv("");
-      ss_twkcv << "paramCVWeight_" << hdr.prettyName;
-      t->Branch(ss_twkcv.str().c_str(), &paramCVResponses[idx],
-                (ss_twkcv.str() + "/D").c_str());
-
-      *meta_name = hdr.prettyName.c_str();
-      meta_n = ntweaks[idx];
-      // For a correction dial, hdr.paramVariations is empty, so manually fill the vector
-      if (hdr.isCorrection) {
-        meta_tweak_values[0] = hdr.centralParamValue;
-      } else {
-        std::copy_n(hdr.paramVariations.begin(), meta_n,
-                    meta_tweak_values.begin());
-      }
-
-      m->Fill();
-    }
   }
 
   // Clear weight vectors
@@ -319,10 +335,11 @@ fhicl::ParameterSet ReadParameterSet(char const *[]) {
 
 int main(int argc, char const *argv[]) {
   HandleOpts(argc, argv);
+
+  bool RunNuSyst = true;
   if (!cliopts::fclname.size()) {
-    std::cout << "[ERROR]: Expected to be passed a -c option." << std::endl;
-    SayUsage(argv);
-    return 1;
+    RunNuSyst = false;
+    std::cout << "-c is not given, running without evaluating reweights" << std::endl;
   }
   if (!cliopts::genie_input.size()) {
     std::cout << "[ERROR]: Expected to be passed a -i option." << std::endl;
@@ -330,7 +347,10 @@ int main(int argc, char const *argv[]) {
     return 1;
   }
 
-  response_helper phh(cliopts::fclname);
+  response_helper phh;
+  if(RunNuSyst){
+    phh = response_helper(cliopts::fclname);
+  }
 
   TChain *gevs = new TChain("gtree");
   if (!gevs->Add(cliopts::genie_input.c_str())) {
@@ -360,7 +380,7 @@ int main(int argc, char const *argv[]) {
     return 6;
   }
 
-  TweakSummaryTree tst(cliopts::outputfile.c_str());
+  TweakSummaryTree tst(cliopts::outputfile.c_str(), RunNuSyst);
   tst.AddBranches(phh);
 
   genie::Messenger::Instance()->SetPrioritiesFromXmlFile(
@@ -370,8 +390,14 @@ int main(int argc, char const *argv[]) {
   size_t NToShout = NToRead / 20;
   NToShout = NToShout ? NToShout : 1;
   for (size_t ev_it = cliopts::NSkip; ev_it < NToRead; ++ev_it) {
+    // Start-of-event: reset tweak containers so later Add() fills cleanly.
+    // (This does NOT touch physics scalars like w, q0, Q2.)
+    tst.Clear();
+
     gevs->GetEntry(ev_it);
     genie::EventRecord const &GenieGHep = *GenieNtpl->event;
+
+    tst.xsec = GenieGHep.XSec()/genie::units::cm2;
 
     genie::GHepParticle *FSLep = GenieGHep.FinalStatePrimaryLepton();
     genie::GHepParticle *ISLep = GenieGHep.Probe();
@@ -382,6 +408,7 @@ int main(int argc, char const *argv[]) {
     TLorentzVector emTransfer = (ISLepP4 - FSLepP4);
 
     tst.Mode = genie::utils::ghep::NeutReactionCode(&GenieGHep);
+    tst.Mode_str = GenieGHep.Summary()->AsString();
     tst.Emiss = GetEmiss(GenieGHep, false);
     tst.Emiss_preFSI = GetEmiss(GenieGHep, true);
     tst.pmiss = GetPmiss(GenieGHep, false);
@@ -397,11 +424,47 @@ int main(int argc, char const *argv[]) {
     tst.q0 = emTransfer.E();
     tst.Q2 = -emTransfer.Mag2();
     tst.q3 = emTransfer.Vect().Mag();
+    
+    // Compute W from (q0, Q2) and nucleon mass
+    // W^2 = M_N^2 + 2 M_N q0 - Q^2  (q0 = energy transfer)
+    // Use consistent nucleon mass value from nuisance
+    double MN = 0.93827203; // GeV
+    double W2 = MN * MN + 2.0 * MN * tst.q0 - tst.Q2;
+    tst.w = (W2 > 0.0) ? std::sqrt(W2) : -1.0;
+    
     tst.Enu_true = ISLepP4.E();
+    tst.nu_pdg = ISLep->Pdg();
+
     tst.plep = FSLepP4.Vect().Mag();
     if (nucleon == NULL) {tst.nucleon_pdg = -999;}
     else{tst.nucleon_pdg = nucleon->Pdg();}
-    tst.target_pdg = GenieGHep.TargetNucleus()->Pdg();
+
+    if(GenieGHep.TargetNucleus()){
+      tst.target_pdg = GenieGHep.TargetNucleus()->Pdg();
+      tst.tgt_A = GenieGHep.TargetNucleus()->A();
+      tst.tgt_Z = GenieGHep.TargetNucleus()->Z();
+    }
+    else{
+      tst.target_pdg = 1000010010;
+      tst.tgt_A = 1;
+      tst.tgt_Z = 1;
+    }
+
+    tst.is_cc = GenieGHep.Summary()->ProcInfo().IsWeakCC();
+    tst.is_qe = GenieGHep.Summary()->ProcInfo().IsQuasiElastic();
+    tst.is_mec = GenieGHep.Summary()->ProcInfo().IsMEC();
+    tst.mec_topology = -1;
+    if (tst.is_mec) {
+      tst.mec_topology = e2i(GetQELikeTarget(GenieGHep));
+    }
+    tst.is_res = GenieGHep.Summary()->ProcInfo().IsResonant();
+    tst.res_channel = 0;
+    if (tst.is_res) {
+      tst.res_channel = SPPChannelFromGHep(GenieGHep);
+    }
+    tst.is_dis = GenieGHep.Summary()->ProcInfo().IsDeepInelastic();
+
+    tst.EAvail_GeV = GetErecoil_MINERvA_LowRecoil(GenieGHep);
 
     // loop over particles
     int ip=-1;
@@ -411,6 +474,15 @@ int main(int argc, char const *argv[]) {
     std::vector<int> fsi_pdgs;
     std::vector<int> fsi_codes;
 
+    // Particle loop
+    std::vector<GHepParticle *> protons;
+
+    // ICARUS 1muNp0pi signal definition
+    unsigned int nMu_1muNp0pi(0), nP_1muNp0pi(0), nPi_1muNp0pi(0);
+    unsigned int nPhoton_1muNp0pi(0), nMesons_1muNp0pi(0), nBaryonsAndPi0_1muNp0pi(0);
+    double maxMomentumP_1muNp0pi = -999.;
+    bool passProtonPCut_1muNp0pi = false;
+
     while ( (p = dynamic_cast<GHepParticle *>(event_iter.Next())) ) {
       ip++;
 
@@ -418,30 +490,100 @@ int main(int argc, char const *argv[]) {
       int  pdgc       = p->Pdg();
       bool is_pion    = pdg::IsPion   (pdgc);
       bool is_nucleon = pdg::IsNucleon(pdgc);
+      bool is_proton = pdg::IsProton(pdgc);
       bool is_kaon = pdg::IsKaon( pdgc );
-      if(!is_pion && !is_nucleon && !is_kaon){
-        continue;
-      }
 
-      // Skip particles with code other than 'hadron in the nucleus'
       GHepStatus_t ist  = p->Status();
-      if(ist != kIStHadronInTheNucleus){
-        continue;
+
+      // For FSI study
+      if(ist==kIStHadronInTheNucleus){
+        // Kaon FSIs can't currently be reweighted. Just update (A, Z) based on
+        // the particle's daughters and move on.
+        if ( is_pion || is_nucleon ){
+          int fsi_code = p->RescatterCode();
+          fsi_pdgs.push_back(pdgc);
+          fsi_codes.push_back(fsi_code);
+        }
       }
 
-      // Kaon FSIs can't currently be reweighted. Just update (A, Z) based on
-      // the particle's daughters and move on.
-      if ( is_kaon ) {
-        continue;
+      // Stable final state particle
+      if(ist==genie::kIStStableFinalState){
+        // All FS protons for generic purpose
+        if(is_proton){
+          protons.push_back(p);
+        }
+
+        // ICARUS 1muNp0pi
+        double momentum = p->P4()->Vect().Mag();
+
+        bool PassMuonPCut = (momentum > 0.226);
+        if ( abs(pdgc) == 13 ) {
+          if (PassMuonPCut) nMu_1muNp0pi+=1;
+        }
+
+        if ( abs(pdgc) == 2212 ) {
+          nP_1muNp0pi+=1;
+          if ( momentum > maxMomentumP_1muNp0pi ) {
+            maxMomentumP_1muNp0pi = momentum;
+            passProtonPCut_1muNp0pi = (momentum > 0.4 && momentum < 1.);
+          }
+        }
+
+        if ( abs(pdgc) == 111 || abs(pdgc) == 211 ) nPi_1muNp0pi+=1;
+        // CHECK A SIMILAR DEFINITION AS MINERVA FOR EXTRA REJECTION OF UNWANTED THINGS IN SIGNAL DEFN.
+        if ( abs(pdgc) == 22 && p->E() > 0.01 ) nPhoton_1muNp0pi+=1;
+        else if ( abs(pdgc) == 211 || abs(pdgc) == 321 || abs(pdgc) == 323 ||
+                  pdgc == 111 || pdgc == 130 || pdgc == 310 || pdgc == 311 ||
+                  pdgc == 313 || abs(pdgc) == 221 || abs(pdgc) == 331 ) nMesons_1muNp0pi+=1;
+        else if ( pdgc == 3112 || pdgc == 3122 || pdgc == 3212 || pdgc == 3222 ||
+                  pdgc == 4112 || pdgc == 4122 || pdgc == 4212 || pdgc == 4222 ||
+                  pdgc == 411 || pdgc == 421 || pdgc == 111 ) nBaryonsAndPi0_1muNp0pi+=1;
+
       }
 
-      int fsi_code = p->RescatterCode();
-      fsi_pdgs.push_back(pdgc);
-      fsi_codes.push_back(fsi_code);
 
     } // END particle loop
     tst.fsi_pdgs = fsi_pdgs;
     tst.fsi_codes = fsi_codes;
+
+    // Final state protons
+    // - Sort protons in descending order of KE
+    std::sort(protons.begin(), protons.end(), 
+              [](GHepParticle* a, GHepParticle* b) {
+                  return a->KinE() > b->KinE();
+              });
+
+    tst.fsprotons_KE.clear();
+    for(const auto& proton: protons){
+      double this_KE = proton->KinE();
+      tst.fsprotons_KE.push_back(this_KE);
+    }
+    // Calculate TKI
+    double deltaPT = -999.;
+    double deltaalphaT = -999.;
+    if(protons.size()>0){
+      deltaPT = CalcTKI_deltaPT(
+        FSLepP4.Vect(),
+        protons[0]->P4()->Vect(),
+        ISLepP4.Vect()
+      );
+      deltaalphaT = CalcTKI_deltaalphaT(
+        FSLepP4.Vect(),
+        protons[0]->P4()->Vect(),
+        ISLepP4.Vect()
+      );
+    }
+
+    tst.deltaPT = deltaPT;
+    tst.deltaalphaT = deltaalphaT;
+
+    // ICARUS 1muNp0pi
+    tst.IsSignal_ICARUS_1muNp0pi = nMu_1muNp0pi==1 && 
+                                   nP_1muNp0pi>0 && passProtonPCut_1muNp0pi &&
+                                   nPi_1muNp0pi==0 &&
+                                   nPhoton_1muNp0pi==0 &&
+                                   nMesons_1muNp0pi==0 &&
+                                   nBaryonsAndPi0_1muNp0pi==0;
 
     if (!(ev_it % NToShout)) {
       std::cout << (ev_it ? "\r" : "") << "Event #" << ev_it << "/" << NToRead
@@ -449,12 +591,14 @@ int main(int argc, char const *argv[]) {
                 << std::flush;
     }
 
-    tst.Clear();
+    
 
     // Calcuate weights
-    event_unit_response_w_cv_t resp = phh.GetEventVariationAndCVResponse(GenieGHep);
+    if(RunNuSyst){
+      event_unit_response_w_cv_t resp = phh.GetEventVariationAndCVResponse(GenieGHep);
+      tst.Add(resp);
+    }
 
-    tst.Add(resp);
     tst.Fill();
     
     // TH: Very important to clear this object to avoid memory issues!

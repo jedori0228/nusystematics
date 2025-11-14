@@ -5,7 +5,7 @@ find_program(CMAKE_CXX_COMPILER NAMES $ENV{CXX} g++ PATHS ENV PATH NO_DEFAULT_PA
 
 set(CMAKE_CXX_STANDARD 17)
 
-project(nusystematics VERSION 02.00.01 LANGUAGES CXX)
+project(nusystematics VERSION 02.00.05 LANGUAGES CXX)
 
 #Changes default install path to be a subdirectory of the build dir.
 #Can set build dir at configure time with -DCMAKE_INSTALL_PREFIX=/install/path
@@ -27,7 +27,7 @@ find_package(ROOT 6.10 REQUIRED)
 
 CPMFindPackage(
     NAME systematicstools
-    GIT_TAG develop
+    GIT_TAG v02_00_03
     GITHUB_REPOSITORY NuSystematics/systematicstools
 )
 

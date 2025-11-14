@@ -12,6 +12,8 @@
 #include "Framework/Interaction/SppChannel.h"
 #include "Framework/Interaction/ProcessInfo.h"
 
+#include "TVector3.h"
+
 #include <sstream>
 
 namespace nusyst {
@@ -224,5 +226,82 @@ inline float GetEmiss(genie::EventRecord const &ev, bool preFSI){
   return Emiss;
 
 }
+
+
+// TKI
+// https://arxiv.org/abs/1910.08658
+inline double CalcTKI_deltaPT(const TVector3 vec_p_mu, const TVector3 vec_p_pro, const TVector3 vec_p_nu){
+
+  TVector3 unit_vec_p_nu = vec_p_nu.Unit();
+
+  // Get transverse momenta w.r.t. the neutrino direction
+  TVector3 pt_mu = vec_p_mu - (vec_p_mu.Dot(unit_vec_p_nu))*unit_vec_p_nu ;
+  TVector3 pt_pro = vec_p_pro - (vec_p_pro.Dot(unit_vec_p_nu))*unit_vec_p_nu;
+
+  TVector3 vec_deltaPT = pt_mu+pt_pro;
+
+  return vec_deltaPT.Mag();
+
+}
+inline double CalcTKI_deltaPTx(const TVector3 vec_p_mu, const TVector3 vec_p_pro, const TVector3 vec_p_nu){
+
+  TVector3 unit_vec_p_nu = vec_p_nu.Unit();
+
+  // Get transverse momenta w.r.t. the neutrino direction
+  TVector3 pt_mu = vec_p_mu - (vec_p_mu.Dot(unit_vec_p_nu))*unit_vec_p_nu ;
+  TVector3 pt_pro = vec_p_pro - (vec_p_pro.Dot(unit_vec_p_nu))*unit_vec_p_nu;
+
+  TVector3 vec_deltaPT = pt_mu+pt_pro;
+
+  double deltaPT_x = ( unit_vec_p_nu.Cross(pt_mu.Unit()) ).Dot(vec_deltaPT);
+
+  return deltaPT_x;
+
+}
+inline double CalcTKI_deltaPTy(const TVector3 vec_p_mu, const TVector3 vec_p_pro, const TVector3 vec_p_nu){
+
+  TVector3 unit_vec_p_nu = vec_p_nu.Unit();
+
+  // Get transverse momenta w.r.t. the neutrino direction
+  TVector3 pt_mu = vec_p_mu - (vec_p_mu.Dot(unit_vec_p_nu))*unit_vec_p_nu ;
+  TVector3 pt_pro = vec_p_pro - (vec_p_pro.Dot(unit_vec_p_nu))*unit_vec_p_nu;
+
+  TVector3 vec_deltaPT = pt_mu+pt_pro;
+
+  double deltaPT_y = -1.*(pt_mu.Unit().Dot(vec_deltaPT));
+
+  return deltaPT_y;
+
+}
+inline double CalcTKI_deltaalphaT(const TVector3 vec_p_mu, const TVector3 vec_p_pro, const TVector3 vec_p_nu){
+
+  TVector3 unit_vec_p_nu = vec_p_nu.Unit();
+
+  // Get transverse momenta w.r.t. the neutrino direction
+  TVector3 pt_mu = vec_p_mu - (vec_p_mu.Dot(unit_vec_p_nu))*unit_vec_p_nu ;
+  TVector3 pt_pro = vec_p_pro - (vec_p_pro.Dot(unit_vec_p_nu))*unit_vec_p_nu;
+
+  TVector3 vec_deltaPT = pt_mu+pt_pro;
+
+  double CosdeltaalphaT = -1. * pt_mu.Unit().Dot( vec_deltaPT.Unit() );
+  double deltaalphaT = TMath::ACos( CosdeltaalphaT );
+  return deltaalphaT*180./M_PI; // degree
+
+}
+inline double CalcTKI_deltaphiT(const TVector3 vec_p_mu, const TVector3 vec_p_pro, const TVector3 vec_p_nu){
+
+  TVector3 unit_vec_p_nu = vec_p_nu.Unit();
+
+  // Get transverse momenta w.r.t. the neutrino direction
+  TVector3 pt_mu = vec_p_mu - (vec_p_mu.Dot(unit_vec_p_nu))*unit_vec_p_nu ;
+  TVector3 pt_pro = vec_p_pro - (vec_p_pro.Dot(unit_vec_p_nu))*unit_vec_p_nu;
+
+  TVector3 vec_deltaPT = pt_mu+pt_pro;
+
+  double CosdeltaphiT = -1. * pt_mu.Unit().Dot( pt_pro.Unit() );
+  double deltaphiT = TMath::ACos( CosdeltaphiT );
+  return deltaphiT*180./M_PI; // degree
+}
+
 
 } // namespace nusyst

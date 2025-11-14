@@ -416,4 +416,19 @@ inline std::string ExpandEnvVar(const std::string& s)
 
 }
 
+// JK: Moved from src/nusystematics/systproviders/FSIReweight_tool.hh
+inline void get_FS_daughters(genie::GHepParticle* par, vector<genie::GHepParticle*>& FSdaughters, genie::EventRecord const &ev) {
+  if (par->Status() == 1) {
+    FSdaughters.push_back(par);
+    return;
+  }
+  //if (par->FirstDaughter()==-1) {
+  //  cout<<"No daughter for this particle..."<<endl;
+  //  return;
+  //}
+  for (int ip=par->FirstDaughter(); ip<=par->LastDaughter(); ip++) {
+    get_FS_daughters(ev.Particle(ip), FSdaughters, ev);
+  }
+}
+
 } // namespace nusyst

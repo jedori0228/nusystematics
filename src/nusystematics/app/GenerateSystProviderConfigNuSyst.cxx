@@ -19,7 +19,7 @@ std::string fclname = "";
 std::string outputfile = "";
 std::string envvar = "FHICL_FILE_PATH";
 std::string fhicl_key = "syst_providers";
-bool WrapWithPROLOG = true;
+bool WrapWithPROLOG = false;
 } // namespace cliopts
 
 void SayUsage(char const *argv[]) {

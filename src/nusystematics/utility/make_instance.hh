@@ -17,6 +17,9 @@
 #include "nusystematics/systproviders/DIRT2_Emiss_tool.hh"
 #include "nusystematics/systproviders/SPPTpiReweight_tool.hh"
 #include "nusystematics/systproviders/CCQERPAReweight_tool.hh"
+#include "nusystematics/systproviders/FSIReweight_tool.hh"
+#include "nusystematics/systproviders/WSReweight_tool.hh"
+#include "nusystematics/systproviders/MECq0q3InterpWeighting_tool.hh"
 
 #include "fhiclcpp/ParameterSet.h"
 
@@ -60,6 +63,12 @@ make_instance(fhicl::ParameterSet const &paramset) {
     return std::make_unique<ResIso>(paramset);
   } else if (tool_type == "CCQERPAReweight"){
     return std::make_unique<CCQERPAReweight>(paramset);
+  } else if (tool_type == "FSIReweight"){
+  return std::make_unique<FSIReweight>(paramset);
+  } else if (tool_type == "WSReweight") {
+    return std::make_unique<WSReweight>(paramset);
+  } else if (tool_type == "MECq0q3InterpWeighting") {
+    return std::make_unique<MECq0q3InterpWeighting>(paramset);
   } else {
     throw unknown_nusyst_systprovider()
         << "[ERROR]: Unknown tool type: " << std::quoted(tool_type);

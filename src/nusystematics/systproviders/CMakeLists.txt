@@ -11,6 +11,9 @@ SET(SYSTP_IMPLFILES
   DIRT2_Emiss_tool.cc
   SPPTpiReweight_tool.cc
   CCQERPAReweight_tool.cc
+  FSIReweight_tool.cc
+  WSReweight_tool.cc
+  MECq0q3InterpWeighting_tool.cc
   )
 
 if(GENIEReWeight_ENABLED)
@@ -35,6 +38,9 @@ SET(SYSTP_HDRFILES
   DIRT2_Emiss_tool.hh
   SPPTpiReweight_tool.hh
   CCQERPAReweight_tool.hh
+  FSIReweight_tool.hh
+  WSReweight_tool.hh
+  MECq0q3InterpWeighting_tool.hh
 )
 
 if(GENIEReWeight_ENABLED)

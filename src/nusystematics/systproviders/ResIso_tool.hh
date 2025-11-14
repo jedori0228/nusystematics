@@ -40,6 +40,8 @@ public:
   // representing this instance as a string.
   std::string AsString() { return "ResIso"; }
 
+  systtools::event_unit_response_t GetDefaultEventResponse(genie::EventRecord const &ev) const;
+
   ~ResIso(){}
 
 private:
