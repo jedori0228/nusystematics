@@ -1,9 +1,9 @@
-#ifndef nusystematics_SYSTPROVIDERS_SPPTpiReweight_TOOL_SEEN
-#define nusystematics_SYSTPROVIDERS_SPPTpiReweight_TOOL_SEEN
+#ifndef nusystematics_SYSTPROVIDERS_MINERvASPPReweight_TOOL_SEEN
+#define nusystematics_SYSTPROVIDERS_MINERvASPPReweight_TOOL_SEEN
 
 #include "nusystematics/interface/IGENIESystProvider_tool.hh"
 
-#include "nusystematics/responsecalculators/SPPTpiReweightCalculator.hh"
+#include "nusystematics/responsecalculators/MINERvASPPReweightCalculator.hh"
 #include "nusystematics/utility/enumclass2int.hh"
 
 #include "nusystematics/utility/GENIEUtils.hh"
@@ -14,13 +14,13 @@
 #include <memory>
 #include <string>
 
-class SPPTpiReweight : public nusyst::IGENIESystProvider_tool {
+class MINERvASPPReweight : public nusyst::IGENIESystProvider_tool {
 
 public:
 
   NEW_SYSTTOOLS_EXCEPT(invalid_engine_state);
 
-  explicit SPPTpiReweight(fhicl::ParameterSet const &);
+  explicit MINERvASPPReweight(fhicl::ParameterSet const &);
 
   bool SetupResponseCalculator(fhicl::ParameterSet const &);
 
@@ -33,23 +33,20 @@ public:
 
   std::string AsString();
 
-  ~SPPTpiReweight();
+  ~MINERvASPPReweight();
 
 private:
 
   fhicl::ParameterSet tool_options;
 
-  size_t pidx_SPPTpiCVCorrection;
-  size_t pidx_SPPTpiCorrectionRW;
+  // Find and save pidx and use later when filling the reweights
+  // 1) Q2
+  // If you are using GENIEv3, G18 or AR23 or similar,
+  // Q2 must be corrected prior to Tpi
+  size_t pidx_Q2;
+  // 2) Tpi correction
+  size_t pidx_Tpi;
 
-  void InitValidTree();
-
-  bool fill_valid_tree;
-  TFile *valid_file;
-  TTree *valid_tree;
-
-  int NEUTMode, Pdgnu, pdgfslep, QELTarget;
-  double Enu, momfslep, cthetafslep, Q2, q0, q3, W;
 };
 
 #endif

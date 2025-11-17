@@ -16,7 +16,7 @@ SET(RSPC_HDRFILES
   MINERvAq0q3Weighting_data.hh
   nuenuebar_xsec_ratio.hh
   DIRT2_EmissEngine_Reweight.hh
-  SPPTpiReweightCalculator.hh
+  MINERvASPPReweightCalculator.hh
   CCQERPAReweightCalculator.hh
   FSIReweightCalculator.hh
   MECq0q3ResponseCalc.hh

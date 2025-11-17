@@ -7,7 +7,9 @@
 
 namespace nusyst {
 
-inline double GetSPPQ2TemplateReweight(double Q2_GeV2){
+namespace MINERvASPP{
+
+inline double GetQ2TemplateReweight(double Q2_GeV2){
 
   double X = Q2_GeV2;
   if(Q2_GeV2>=3.0) X = 3.000000;
@@ -33,7 +35,7 @@ inline double GetSPPQ2TemplateReweight(double Q2_GeV2){
 
 }
 
-inline double GetSPPTpiReweight(double Tpi_GeV){
+inline double GetTpiReweight(double Tpi_GeV){
 
   static double landau_Cutoff = 0.225;
 
@@ -66,19 +68,18 @@ inline double GetSPPTpiReweight(double Tpi_GeV){
 
 }
 
-// CV correction
-inline double GetSPPTpiCVCorrection(double Q2_GeV2, double Tpi_GeV){
+inline double GetCVCorrection(double Q2_GeV2, double Tpi_GeV){
 
-  double this_Q2RW = GetSPPQ2TemplateReweight(Q2_GeV2);
-  double this_TpiRW = GetSPPTpiReweight(Tpi_GeV);
+  double this_Q2RW = GetQ2TemplateReweight(Q2_GeV2);
+  double this_TpiRW = GetTpiReweight(Tpi_GeV);
 
   return this_Q2RW * this_TpiRW;
 
 }
 
-inline double GetSPPTpiCorrectionRW(double Q2_GeV2, double Tpi_GeV, double parameter_value){
+inline double GetTpiCorrectionRW(double Q2_GeV2, double Tpi_GeV, double parameter_value){
   
-  double CVCorr = GetSPPTpiCVCorrection(Q2_GeV2, Tpi_GeV);
+  double CVCorr = GetCVCorrection(Q2_GeV2, Tpi_GeV);
 
   // 1/CVCorr is the correction back to nominal = 1sigma 
   double oneSigRW = 1./CVCorr;
@@ -88,6 +89,8 @@ inline double GetSPPTpiCorrectionRW(double Q2_GeV2, double Tpi_GeV, double param
   double this_rw = 1. + parameter_value * oneSigUnc;
 
   return this_rw;
+
+}
 
 }
 

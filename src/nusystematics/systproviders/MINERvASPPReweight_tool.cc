@@ -1,4 +1,4 @@
-#include "nusystematics/systproviders/SPPTpiReweight_tool.hh"
+#include "nusystematics/systproviders/MINERvASPPReweight_tool.hh"
 
 #include "nusystematics/utility/exceptions.hh"
 
@@ -13,20 +13,22 @@ using namespace systtools;
 using namespace nusyst;
 using namespace fhicl;
 
-SPPTpiReweight::SPPTpiReweight(ParameterSet const &params)
+MINERvASPPReweight::MINERvASPPReweight(ParameterSet const &params)
     : IGENIESystProvider_tool(params),
-      pidx_SPPTpiCVCorrection(systtools::kParamUnhandled<size_t>),
-      pidx_SPPTpiCorrectionRW(systtools::kParamUnhandled<size_t>),
-      valid_file(nullptr), valid_tree(nullptr) {}
+      pidx_Q2(systtools::kParamUnhandled<size_t>),
+      pidx_Tpi(systtools::kParamUnhandled<size_t>) {
 
-SystMetaData SPPTpiReweight::BuildSystMetaData(ParameterSet const &cfg,
+}
+
+SystMetaData MINERvASPPReweight::BuildSystMetaData(ParameterSet const &cfg,
                                                      paramId_t firstId) {
 
-  std::cout << "[SPPTpiReweight::BuildSystMetaData] called" << std::endl;
+  std::cout << "[MINERvASPPReweight::BuildSystMetaData] called" << std::endl;
 
   SystMetaData smd;
+
   for (std::string const &pname :
-       {"SPPTpiCVCorrection", "SPPTpiCorrectionRW"}){
+       {"MINERvASPP_Q2", "MINERvASPP_Tpi"}){
     systtools::SystParamHeader phdr;
     if (ParseFhiclToolConfigurationParameter(cfg, pname, phdr, firstId)) {
       phdr.systParamId = firstId++;
@@ -34,52 +36,37 @@ SystMetaData SPPTpiReweight::BuildSystMetaData(ParameterSet const &cfg,
     }
   }
 
-  fill_valid_tree = cfg.get<bool>("fill_valid_tree", false);
-  tool_options.put("fill_valid_tree", fill_valid_tree);
-
   return smd;
 }
 
-bool SPPTpiReweight::SetupResponseCalculator(
+bool MINERvASPPReweight::SetupResponseCalculator(
     fhicl::ParameterSet const &tool_options) {
 
-  std::cout << "[SPPTpiReweight::SetupResponseCalculator] called" << std::endl;
+  std::cout << "[MINERvASPPReweight::SetupResponseCalculator] called" << std::endl;
 
   systtools::SystMetaData const &md = GetSystMetaData();
 
-  if (HasParam(md, "SPPTpiCVCorrection")) {
-    pidx_SPPTpiCVCorrection = 
-        GetParamIndex(md, "SPPTpiCVCorrection");
-
-    // this must be "isCorrection"
-    if( ! GetParam(md, pidx_SPPTpiCVCorrection).isCorrection ){
-
-      throw invalid_engine_state()
-          << "SPPTpiCVCorrection from SPPTpiReweight module must be a correction dial, but it is not. Check your config/paramheader file";
-    }
-
-  }
-  if (HasParam(md, "SPPTpiCorrectionRW")) {
-    pidx_SPPTpiCorrectionRW =
-        GetParamIndex(md, "SPPTpiCorrectionRW");
+  if (HasParam(md, "MINERvASPP_Q2")) {
+    pidx_Q2 = GetParamIndex(md, "MINERvASPP_Q2");
   }
 
-  fill_valid_tree = tool_options.get<bool>("fill_valid_tree", false);
-  if (fill_valid_tree) {
-    InitValidTree();
+
+  if (HasParam(md, "MINERvASPP_Tpi")) {
+    pidx_Tpi = GetParamIndex(md, "MINERvASPP_Tpi");
   }
 
   return true;
 }
 
 event_unit_response_t
-SPPTpiReweight::GetEventResponse(genie::EventRecord const &ev) {
+MINERvASPPReweight::GetEventResponse(genie::EventRecord const &ev) {
 
   // when the event is not applicable for this type of reweighting,
   // use GetDefaultEventResponse() to return an auto-1.-filled vector
 
   bool IsCOH = ev.Summary()->ProcInfo().IsCoherentProduction();
   if(IsCOH){
+    //std::cout << "[JSKIMDEBUG] COH" << std::endl;
     return this->GetDefaultEventResponse();
   }
 
@@ -149,14 +136,15 @@ SPPTpiReweight::GetEventResponse(genie::EventRecord const &ev) {
 
   // SPP
   if( nPip != 1 || genie_n_mesons!= 1 ){
+    //std::cout << "[JSKIMDEBUG] NOT SPP" << std::endl;
     return this->GetDefaultEventResponse();
   }
 
   // has photon with E>10 MeV; following MINERvA CC1pip signal definition
   if(genie_n_photons!=0){
+    //std::cout << "[JSKIMDEBUG] Has Photon" << std::endl;
     return this->GetDefaultEventResponse();
   }
-
 
   genie::GHepParticle *FSLep = ev.FinalStatePrimaryLepton();
   genie::GHepParticle *ISLep = ev.Probe();
@@ -176,79 +164,43 @@ SPPTpiReweight::GetEventResponse(genie::EventRecord const &ev) {
   int TargetA = ev.Summary()->InitState().Tgt().A();
   bool IsH = TargetA==1;
 
-  if (pidx_SPPTpiCVCorrection != systtools::kParamUnhandled<size_t>) {
-    resp.push_back( {md[pidx_SPPTpiCVCorrection].systParamId, {}} );
-    double this_reweight = GetSPPTpiCVCorrection(this_Q2_GeV2, this_Tpi_GeV);
-    if(IsH) resp.back().responses.push_back( 1. );
-    else resp.back().responses.push_back( this_reweight );
-  }
-
-  if (pidx_SPPTpiCorrectionRW != systtools::kParamUnhandled<size_t>) {
-    resp.push_back( {md[pidx_SPPTpiCorrectionRW].systParamId, {}} );
+/*
     for (double var : md[pidx_SPPTpiCorrectionRW].paramVariations) {
       double this_reweight = GetSPPTpiCorrectionRW(this_Q2_GeV2, this_Tpi_GeV, var);
       if(IsH) resp.back().responses.push_back( 1. );
       else resp.back().responses.push_back( this_reweight );
     }
+*/
+
+  //std::cout << "[JSKIMDEBUG] SPP event found.." << std::endl;
+
+  if (pidx_Q2 != systtools::kParamUnhandled<size_t>) {
+    resp.push_back( {md[pidx_Q2].systParamId, {}} );
+    for (double var : md[pidx_Q2].paramVariations) {
+      if(IsH) resp.back().responses.push_back( 1. );
+      else{
+        double this_Q2RW = nusyst::MINERvASPP::GetQ2TemplateReweight(this_Q2_GeV2);
+        resp.back().responses.push_back( this_Q2RW );
+      }
+    }
   }
 
-
-  if (fill_valid_tree) {
-
-    pdgfslep = ev.FinalStatePrimaryLepton()->Pdg();
-    momfslep = FSLepP4.Vect().Mag();
-    cthetafslep = FSLepP4.Vect().CosTheta();
-
-    Pdgnu = ISLep->Pdg();
-    NEUTMode = 0;
-    if (ev.Summary()->ProcInfo().IsMEC() &&
-        ev.Summary()->ProcInfo().IsWeakCC()) {
-      NEUTMode = (Pdgnu > 0) ? 2 : -2;
-    } else {
-      NEUTMode = genie::utils::ghep::NeutReactionCode(&ev);
+  if (pidx_Tpi != systtools::kParamUnhandled<size_t>) {
+    resp.push_back( {md[pidx_Tpi].systParamId, {}} );
+    for (double var : md[pidx_Tpi].paramVariations) {
+      if(IsH) resp.back().responses.push_back( 1. );
+      else{
+        double this_TpiRW = nusyst::MINERvASPP::GetTpiReweight(this_Tpi_GeV);
+        resp.back().responses.push_back( this_TpiRW );
+      }
     }
-
-    QELikeTarget_t qel_targ = GetQELikeTarget(ev);
-    QELTarget = e2i(qel_targ);
-
-    Enu = ISLepP4.E();
-    Q2 = -emTransfer.Mag2();
-    W = ev.Summary()->Kine().W(true);
-    q0 = emTransfer.E();
-    q3 = emTransfer.Vect().Mag();
-
-    valid_tree->Fill();
   }
 
   return resp;
 
 }
 
-std::string SPPTpiReweight::AsString() { return ""; }
+std::string MINERvASPPReweight::AsString() { return "MINERvASPPReweight"; }
 
-void SPPTpiReweight::InitValidTree() {
-
-  valid_file = new TFile("MINERvAq3q0WeightValid.root", "RECREATE");
-  valid_tree = new TTree("valid_tree", "");
-
-  valid_tree->Branch("NEUTMode", &NEUTMode);
-  valid_tree->Branch("QELTarget", &QELTarget);
-  valid_tree->Branch("Enu", &Enu);
-  valid_tree->Branch("Pdg_nu", &Pdgnu);
-  valid_tree->Branch("Pdg_FSLep", &pdgfslep);
-  valid_tree->Branch("P_FSLep", &momfslep);
-  valid_tree->Branch("CosTheta_FSLep", &cthetafslep);
-  valid_tree->Branch("Q2", &Q2);
-  valid_tree->Branch("W", &W);
-  valid_tree->Branch("q0", &q0);
-  valid_tree->Branch("q3", &q3);
-}
-
-SPPTpiReweight::~SPPTpiReweight() {
-  if (valid_file) {
-    valid_tree->SetDirectory(valid_file);
-    valid_file->Write();
-    valid_file->Close();
-    delete valid_file;
-  }
+MINERvASPPReweight::~MINERvASPPReweight() {
 }

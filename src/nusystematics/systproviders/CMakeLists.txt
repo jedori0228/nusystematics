@@ -9,7 +9,7 @@ SET(SYSTP_IMPLFILES
   MiscInteractionSysts_tool.cc
   NOvAStyleNonResPionNorm_tool.cc
   DIRT2_Emiss_tool.cc
-  SPPTpiReweight_tool.cc
+  MINERvASPPReweight_tool.cc
   CCQERPAReweight_tool.cc
   FSIReweight_tool.cc
   WSReweight_tool.cc
@@ -36,7 +36,7 @@ SET(SYSTP_HDRFILES
   MiscInteractionSysts_tool.hh
   NOvAStyleNonResPionNorm_tool.hh
   DIRT2_Emiss_tool.hh
-  SPPTpiReweight_tool.hh
+  MINERvASPPReweight_tool.hh
   CCQERPAReweight_tool.hh
   FSIReweight_tool.hh
   WSReweight_tool.hh
