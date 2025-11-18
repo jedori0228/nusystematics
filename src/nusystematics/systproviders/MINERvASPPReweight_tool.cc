@@ -176,22 +176,26 @@ MINERvASPPReweight::GetEventResponse(genie::EventRecord const &ev) {
 
   if (pidx_Q2 != systtools::kParamUnhandled<size_t>) {
     resp.push_back( {md[pidx_Q2].systParamId, {}} );
+    double this_Q2_RW = nusyst::MINERvASPP::GetQ2TemplateReweight(this_Q2_GeV2);
+    double this_Q2_OneSigSize = this_Q2_RW-1.0;
     for (double var : md[pidx_Q2].paramVariations) {
       if(IsH) resp.back().responses.push_back( 1. );
       else{
-        double this_Q2RW = nusyst::MINERvASPP::GetQ2TemplateReweight(this_Q2_GeV2);
-        resp.back().responses.push_back( this_Q2RW );
+        double this_rw = 1.0 + var * this_Q2_OneSigSize;
+        resp.back().responses.push_back( this_rw );
       }
     }
   }
 
   if (pidx_Tpi != systtools::kParamUnhandled<size_t>) {
     resp.push_back( {md[pidx_Tpi].systParamId, {}} );
+    double this_Tpi_RW = nusyst::MINERvASPP::GetTpiReweight(this_Tpi_GeV);
+    double this_Tpi_OneSigSize = this_Tpi_RW - 1.0;
     for (double var : md[pidx_Tpi].paramVariations) {
       if(IsH) resp.back().responses.push_back( 1. );
       else{
-        double this_TpiRW = nusyst::MINERvASPP::GetTpiReweight(this_Tpi_GeV);
-        resp.back().responses.push_back( this_TpiRW );
+        double this_rw = 1.0 + var * this_Tpi_OneSigSize;
+        resp.back().responses.push_back( this_rw );
       }
     }
   }
